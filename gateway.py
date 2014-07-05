@@ -14,10 +14,12 @@ if __name__ == '__main__':
         form = cgi.FieldStorage()
         ip = form.getfirst("ip", "")
         provider = form.getfirst("provider", "")
+
         if providers.has_key(provider):
                 print "Location: %s" % providers[provider](ip)
                 print ""
                 exit()
+
         print "Content-type: text/html"
         print ""
         print '''
@@ -29,5 +31,16 @@ li a { display: inline-block; padding: .2em 0; font: normal normal 120%sans-seri
 <ul>
 '''
         for (name,q) in sorted(providers.items()):
-                print '<li><a href="%s"><em>%s</em>@%s</li>' % (q(ip), ip, name)
+                print '<li><a href="%s"><em>%s</em>@%s</a></li>' % (q(ip), ip, name)
         print "</ul></body>"
+
+print '''
+<h2>Usage</h2>
+<dl><dt>http://tools.wmflabs.org/whois/IPADDRESS</dt>
+<dd>List of links to regional databases</dd>
+<dt>http://tools.wmflabs.org/whois/IPADDRESS/redirect/NAME</dt>
+<dd>Redirect to a search result page provided by NAME.<dd>
+</dl>
+
+<p><strong>This tool is expereimental. The URL and functionalities are not stable.</strong></p>
+'''
