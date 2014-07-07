@@ -25,12 +25,14 @@ if __name__ == '__main__':
         doLookup = form.getfirst("lookup", "")
 
         result = ''
+        error = False
         if doLookup != '':
                 try:
                         query = IPWhois(ip)
                         result = query.lookup()
                 except ValueError as e:
                         result = {"error": str(e)}
+                        error = True
         
         if providers.has_key(provider):
                 print "Location: %s" % providers[provider](ip)
@@ -65,8 +67,15 @@ if __name__ == '__main__':
 ''' % {'site': SITE}
         if doLookup:
                 print '<h2>Result</h2><pre>%s</pre>' % json.dumps(result, indent=4)
-        elif ip != '':
-                print '<a class="btn btn-default btn-lg" href="%(site)s/%(ip)s/lookup"><strong>Lookup %(ip)s</strong></a>' % {'site': SITE, 'ip': ip}
+        print '''
+<form action="%(site)s/gateway.py">
+<input type="hidden" name="lookup" value="true"/>
+<div class="row">
+<div class="col-md-10"><input type="text" name="ip" value="%(ip)s" class="form-control"/></div>
+<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-default"/></div>
+</div>
+</form>
+''' % ({'site': SITE, 'ip': ip})
         print '''
 </div>
 <div class="col-md-3">
@@ -80,7 +89,7 @@ if __name__ == '__main__':
 print '''
 </div>
 </div>
-<h2>Usage<a name="usage"></a></h2>
+<h2>Usage</h2>
 <dl>
 <dt><code>%(site)s/IPADDRESS/lookup</code></dt>
 <dd>Whois result</dd>
