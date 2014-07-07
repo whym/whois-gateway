@@ -82,6 +82,8 @@ print '''
 <dl>
 <dt><code>%(site)s/IPADDRESS/lookup</code></dt>
 <dd>Whois result</dd>
+<dt><code>%(site)s/IPADDRESS/lookup/json</code></dt>
+<dd>Whois result in JSON</dd>
 <dt><code>%(site)s/IPADDRESS</code></dt>
 <dd>List of links to regional databases</dd>
 <dt><code>%(site)s/IPADDRESS/redirect/NAME</code></dt>
