@@ -2,13 +2,15 @@
 import sys
 sys.path.insert(0, '/data/project/whois/local/lib/python2.7/site-packages')
 
+from ipwhois import IPWhois
 import cgitb
 import cgi
-from ipwhois import IPWhois
 import json
+import os
 
 if __name__ == '__main__':
-        SITE = 'http://tools.wmflabs.org/whois'
+        req = os.environ.get("REQUEST_URI")
+        SITE = '//tools.wmflabs.org/whois'
         providers = {
                 "ARIN": lambda x: "http://whois.arin.net/rest/ip/" + x,
                 "RIPE": lambda x: "https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor" % x,
@@ -24,8 +26,11 @@ if __name__ == '__main__':
 
         result = ''
         if doLookup != '':
-                query = IPWhois(ip)
-                result = query.lookup()
+                try:
+                        query = IPWhois(ip)
+                        result = query.lookup()
+                except ValueError as e:
+                        result = {"error": str(e)}
         
         if providers.has_key(provider):
                 print "Location: %s" % providers[provider](ip)
@@ -47,11 +52,8 @@ if __name__ == '__main__':
 <link rel="stylesheet" href="%(site)s/css/bootstrap.min.css">
 <link rel="stylesheet" href="%(site)s/css/bootstrap-theme.min.css">
 <script src="%(site)s/js/bootstrap.min.js"></script>
-<style type="text/css">
-li a { display: inline-block; padding: .2em 0; font: normal normal sans-serif; }
-</style>
 <title>Whois Gateway</title>
-</head.
+</head>
 <body>
 <div class="container">
 <header><h1>Whois Gateway</h1></header>
@@ -63,8 +65,8 @@ li a { display: inline-block; padding: .2em 0; font: normal normal sans-serif; }
 ''' % {'site': SITE}
         if doLookup:
                 print '<h2>Result</h2><pre>%s</pre>' % json.dumps(result, indent=4)
-        else:
-                print '<a class="btn btn-default btn-lg" href="%(site)s/%(ip)s/lookup">Lookup %(ip)s</a>' % {'site': SITE, 'ip': ip}
+        elif ip != '':
+                print '<a class="btn btn-default btn-lg" href="%(site)s/%(ip)s/lookup"><strong>Lookup %(ip)s</strong></a>' % {'site': SITE, 'ip': ip}
         print '''
 </div>
 <div class="col-md-3">
