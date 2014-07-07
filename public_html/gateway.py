@@ -8,6 +8,7 @@ from ipwhois import IPWhois
 import json
 
 if __name__ == '__main__':
+        SITE = 'http://tools.wmflabs.org/whois'
         providers = {
                 "ARIN": lambda x: "http://whois.arin.net/rest/ip/" + x,
                 "RIPE": lambda x: "https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor" % x,
@@ -39,34 +40,53 @@ if __name__ == '__main__':
                 
         print "Content-type: text/html"
         print ""
-        print '''
+        print '''<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="%(site)s/css/bootstrap.min.css">
+<link rel="stylesheet" href="%(site)s/css/bootstrap-theme.min.css">
+<script src="%(site)s/js/bootstrap.min.js"></script>
 <style type="text/css">
 li a { display: inline-block; padding: .2em 0; font: normal normal sans-serif; }
-#result { border: 1px solid; }
 </style>
 <title>Whois Gateway</title>
+</head.
 <body>
-<h1>Whois Gateway</h1>
-'''
+<div class="container">
+<header><h1>Whois Gateway</h1></header>
+
+<div class="alert alert-warning" role="alert"><strong>This tool is expereimental.</strong> The URL and functionalities are not stable.</div>
+
+<div class="row">
+<div class="col-md-9">
+''' % {'site': SITE}
         if doLookup:
-                print '<div id="result"><pre>%s</pre></div>' % json.dumps(result, indent=4)
+                print '<h2>Result</h2><pre>%s</pre>' % json.dumps(result, indent=4)
+        else:
+                print '<a class="btn btn-default btn-lg" href="%(site)s/%(ip)s/lookup">Lookup %(ip)s</a>' % {'site': SITE, 'ip': ip}
         print '''
+</div>
+<div class="col-md-3">
 <h2>External links</h2>
 <ul>
 '''
         for (name,q) in sorted(providers.items()):
                 print '<li><a href="%s"><em>%s</em>@%s</a></li>' % (q(ip), ip, name)
-        print "</ul></body>"
+        print "</ul>"
 
 print '''
-<h2>Usage</h2>
-<dl><dt>http://tools.wmflabs.org/whois/IPADDRESS/lookup</dt>
+</div>
+</div>
+<h2>Usage<a name="usage"></a></h2>
+<dl>
+<dt><code>%(site)s/IPADDRESS/lookup</code></dt>
 <dd>Whois result</dd>
-<dt>http://tools.wmflabs.org/whois/IPADDRESS</dt>
+<dt><code>%(site)s/IPADDRESS</code></dt>
 <dd>List of links to regional databases</dd>
-<dt>http://tools.wmflabs.org/whois/IPADDRESS/redirect/NAME</dt>
+<dt><code>%(site)s/IPADDRESS/redirect/NAME</code></dt>
 <dd>Redirect to a search result page provided by NAME.<dd>
 </dl>
 
-<p><strong>This tool is expereimental. The URL and functionalities are not stable.</strong></p>
-'''
+</body></html>
+''' % {'site': SITE}
