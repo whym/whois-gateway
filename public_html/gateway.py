@@ -14,7 +14,7 @@ if __name__ == '__main__':
                 'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
                 'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
                 'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
-                'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&query=' + x
+                'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
         }
         cgitb.enable(display=0, logdir='/data/project/whois/logs')
         form = cgi.FieldStorage()
@@ -99,7 +99,9 @@ print '''
 <dt><code>%(site)s/IPADDRESS/redirect/NAME</code></dt>
 <dd>Redirect to a search result page provided by NAME.<dd>
 </dl>
+</div>
+<footer><div class="container">
 <hr>
-<footer><div class="container text-center text-muted"><a href="https://tools.wmflabs.org/?tool=whois">Whois Gateway</a> on <a href="https://tools.wmflabs.org">Tool Labs</a></div></footer>
+<p class="text-center text-muted"><a href="https://tools.wmflabs.org/?tool=whois">Whois Gateway</a> on <a href="https://tools.wmflabs.org">Tool Labs</a></p></div></footer>
 </body></html>
 ''' % {'site': SITE}
