@@ -65,7 +65,7 @@ if __name__ == '__main__':
 <div class="col-sm-9">
 ''' % {'site': SITE}
         print '''
-<form action="%(site)s/index.py">
+<form action="%(site)s/gateway.py">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row form-group %(error)s">
 <div class="col-sm-10"><input type="text" name="ip" value="%(ip)s" class="form-control" %(af)s/></div>
