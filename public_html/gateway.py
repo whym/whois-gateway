@@ -29,7 +29,7 @@ if __name__ == '__main__':
                 try:
                         query = IPWhois(ip)
                         result = query.lookup()
-                except ValueError as e:
+                except Exception as e:
                         result = {'error': str(e)}
                         error = True
         
