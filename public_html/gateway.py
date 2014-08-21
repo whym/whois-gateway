@@ -48,7 +48,7 @@ if __name__ == '__main__':
         if doLookup:
                 try:
                         query = IPWhois(ip)
-                        result = query.lookup()
+                        result = query.lookup_rws()
                 except Exception as e:
                         result = {'error': str(e)}
                         error = True
