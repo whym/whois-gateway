@@ -25,8 +25,7 @@ def format_table(dct):
     return ret
               
 def format_result(result):
-    return format_table(result)
-    #return '<pre>%s</pre>' % json.dumps(result, indent=4)
+    return '<div class="panel panel-default">%s</div>' % format_table(result)
 
 if __name__ == '__main__':
     SITE = '//tools.wmflabs.org/whois'
