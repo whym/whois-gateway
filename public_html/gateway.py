@@ -9,64 +9,64 @@ import json
 import os
 
 def format_new_lines(s):
-        return s.replace('\n', '<br/>')
+    return s.replace('\n', '<br/>')
 def format_table(dct):
-        if isinstance(dct, list):
-                return '\n'.join(format_table(x) for x in dct)
-        ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
-        for (k,v) in dct.items():
-              if v is None or len(v) == 0 or v == 'NA' or v == 'None':
-                      ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
-              elif isinstance(v, basestring):
-                      ret += '<tr><th>%s</th><td class="text-">%s</td></tr>' % (k, format_new_lines(v))
-              else:
-                      ret += '<tr><th>%s</th><td>%s</td></tr>' % (k, format_table(v))
-        ret += '</tbody></table></div>'
-        return ret
-                      
+    if isinstance(dct, list):
+        return '\n'.join(format_table(x) for x in dct)
+    ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
+    for (k,v) in dct.items():
+          if v is None or len(v) == 0 or v == 'NA' or v == 'None':
+              ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
+          elif isinstance(v, basestring):
+              ret += '<tr><th>%s</th><td class="text-">%s</td></tr>' % (k, format_new_lines(v))
+          else:
+              ret += '<tr><th>%s</th><td>%s</td></tr>' % (k, format_table(v))
+    ret += '</tbody></table></div>'
+    return ret
+              
 def format_result(result):
-        return format_table(result)
-        #return '<pre>%s</pre>' % json.dumps(result, indent=4)
+    return format_table(result)
+    #return '<pre>%s</pre>' % json.dumps(result, indent=4)
 
 if __name__ == '__main__':
-        SITE = '//tools.wmflabs.org/whois'
-        providers = {
-                'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
-                'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
-                'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
-                'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
-        }
-        cgitb.enable(display=0, logdir='/data/project/whois/logs')
-        form = cgi.FieldStorage()
-        ip = form.getfirst('ip', '')
-        provider = form.getfirst('provider', '').upper()
-        fmt = form.getfirst('format', 'html').lower()
-        doLookup = form.getfirst('lookup', 'false').lower() != 'false'
+    SITE = '//tools.wmflabs.org/whois'
+    providers = {
+        'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
+        'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
+        'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
+        'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
+    }
+    cgitb.enable(display=0, logdir='/data/project/whois/logs')
+    form = cgi.FieldStorage()
+    ip = form.getfirst('ip', '')
+    provider = form.getfirst('provider', '').upper()
+    fmt = form.getfirst('format', 'html').lower()
+    doLookup = form.getfirst('lookup', 'false').lower() != 'false'
 
-        result = ''
-        error = False
-        if doLookup:
-                try:
-                        query = IPWhois(ip)
-                        result = query.lookup_rws()
-                except Exception as e:
-                        result = {'error': str(e)}
-                        error = True
-        
-        if providers.has_key(provider):
-                print 'Location: %s' % providers[provider](ip)
-                print ''
-                exit()
-
-        if fmt == 'json' and doLookup:
-                print 'Content-type: text/plain'
-                print ''
-                print json.dumps(result)
-                exit()
-                
-        print 'Content-type: text/html'
+    result = ''
+    error = False
+    if doLookup:
+        try:
+            query = IPWhois(ip)
+            result = query.lookup_rws()
+        except Exception as e:
+            result = {'error': str(e)}
+            error = True
+    
+    if providers.has_key(provider):
+        print 'Location: %s' % providers[provider](ip)
         print ''
-        print '''<!DOCTYPE HTML>
+        exit()
+
+    if fmt == 'json' and doLookup:
+        print 'Content-type: text/plain'
+        print ''
+        print json.dumps(result)
+        exit()
+        
+    print 'Content-type: text/html'
+    print ''
+    print '''<!DOCTYPE HTML>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 <div class="row">
 <div class="col-sm-9">
 ''' % {'site': SITE}
-        print '''
+    print '''
 <form action="%(site)s/gateway.py">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row form-group %(error)s">
@@ -98,17 +98,17 @@ if __name__ == '__main__':
 </div>
 </form>
 ''' % ({'site': SITE, 'ip': ip, 'error': 'has-error' if error else '', 'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
-        if doLookup:
-                print format_result(result)
-        print '''
+    if doLookup:
+        print format_result(result)
+    print '''
 </div>
 <div class="col-sm-3">
 <h2>External links</h2>
 <ul class="list-unstyled">
 '''
-        for (name,q) in sorted(providers.items()):
-                print '<li><a href="%s"><strong>%s</strong>@%s</a></li>' % (q(ip), ip, name)
-        print '</ul>'
+    for (name,q) in sorted(providers.items()):
+        print '<li><a href="%s"><strong>%s</strong>@%s</a></li>' % (q(ip), ip, name)
+    print '</ul>'
 
 print '''
 </div>
