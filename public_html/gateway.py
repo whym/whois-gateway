@@ -8,6 +8,26 @@ import cgi
 import json
 import os
 
+def format_new_lines(s):
+        return s.replace('\n', '<br/>')
+def format_table(dct):
+        if isinstance(dct, list):
+                return '\n'.join(format_table(x) for x in dct)
+        ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
+        for (k,v) in dct.items():
+              if v is None or len(v) == 0 or v == 'NA' or v == 'None':
+                      ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
+              elif isinstance(v, basestring):
+                      ret += '<tr><th>%s</th><td class="text-">%s</td></tr>' % (k, format_new_lines(v))
+              else:
+                      ret += '<tr><th>%s</th><td>%s</td></tr>' % (k, format_table(v))
+        ret += '</tbody></table></div>'
+        return ret
+                      
+def format_result(result):
+        return format_table(result)
+        #return '<pre>%s</pre>' % json.dumps(result, indent=4)
+
 if __name__ == '__main__':
         SITE = '//tools.wmflabs.org/whois'
         providers = {
@@ -41,7 +61,7 @@ if __name__ == '__main__':
         if fmt == 'json' and doLookup:
                 print 'Content-type: text/plain'
                 print ''
-                print result
+                print json.dumps(result)
                 exit()
                 
         print 'Content-type: text/html'
@@ -57,9 +77,14 @@ if __name__ == '__main__':
 </head>
 <body>
 <div class="container">
+<div class="row">
+<div class="col-sm-5">
 <header><h1>Whois Gateway</h1></header>
-
-<div class="alert alert-warning" role="alert"><strong>This tool is expereimental.</strong> The URL and functionalities are not stable.</div>
+</div>
+<div class="col-sm-7"><div class="alert alert-warning" role="alert">
+<strong>This tool is expereimental.</strong> The URL and functionalities might change.
+</div></div>
+</div>
 
 <div class="row">
 <div class="col-sm-9">
@@ -74,7 +99,7 @@ if __name__ == '__main__':
 </form>
 ''' % ({'site': SITE, 'ip': ip, 'error': 'has-error' if error else '', 'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
         if doLookup:
-                print '<pre>%s</pre>' % json.dumps(result, indent=4)
+                print format_result(result)
         print '''
 </div>
 <div class="col-sm-3">
@@ -94,14 +119,11 @@ print '''
 <dd>Whois result</dd>
 <dt><code>%(site)s/IPADDRESS/lookup/json</code></dt>
 <dd>Whois result in JSON</dd>
-<dt><code>%(site)s/IPADDRESS</code></dt>
-<dd>List of links to regional databases</dd>
-<dt><code>%(site)s/IPADDRESS/redirect/NAME</code></dt>
-<dd>Redirect to a search result page provided by NAME.<dd>
 </dl>
+See <a href="https://github.com/whym/whois-gateway/blob/master/README.md#api">API</a> for more.
 </div>
 <footer><div class="container">
 <hr>
-<p class="text-center text-muted"><a href="https://tools.wmflabs.org/?tool=whois">Whois Gateway</a> on <a href="https://tools.wmflabs.org">Tool Labs</a></p></div></footer>
+<p class="text-center text-muted"><a href="https://tools.wmflabs.org/whois/">Whois Gateway</a> <small>(<a href="https://github.com/whym/whois-gateway">source code</a>)</small> on <a href="https://tools.wmflabs.org">Tool Labs</a> / <a href="https://github.com/whym/whois-gateway/issues">Issues?</a></p></div></footer>
 </body></html>
 ''' % {'site': SITE}
