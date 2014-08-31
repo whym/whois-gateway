@@ -119,7 +119,7 @@ print '''
 <dt><code>%(site)s/IPADDRESS/lookup/json</code></dt>
 <dd>Whois result in JSON</dd>
 </dl>
-See <a href="https://github.com/whym/whois-gateway/blob/master/README.md#api">API</a> for more.
+See <a href="https://github.com/whym/whois-gateway#api">API</a> for more.
 </div>
 <footer><div class="container">
 <hr>
