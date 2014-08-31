@@ -89,6 +89,7 @@ if __name__ == '__main__':
 <div class="col-sm-9">
 ''' % {'site': SITE}
     print '''
+<h2>
 <form action="%(site)s/gateway.py">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row form-group %(error)s">
@@ -96,6 +97,7 @@ if __name__ == '__main__':
 <div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
 </div>
 </form>
+</h2>
 ''' % ({'site': SITE, 'ip': ip, 'error': 'has-error' if error else '', 'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
     if doLookup:
         print format_result(result)
