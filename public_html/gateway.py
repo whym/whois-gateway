@@ -90,10 +90,10 @@ if __name__ == '__main__':
 ''' % {'site': SITE}
     print '''
 <h2>
-<form action="%(site)s/gateway.py">
+<form action="%(site)s/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row form-group %(error)s">
-<div class="col-sm-10"><input type="text" name="ip" value="%(ip)s" class="form-control" %(af)s/></div>
+<div class="col-sm-10"><div class="input-group"><label class="input-group-addon" for="ipaddress-input">IP address</label><input type="text" name="ip" value="%(ip)s" id="ipaddress-input" class="form-control" %(af)s/></div></div>
 <div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
 </div>
 </form>
