@@ -81,7 +81,7 @@ if __name__ == '__main__':
 <header><h1>Whois Gateway</h1></header>
 </div>
 <div class="col-sm-7"><div class="alert alert-warning" role="alert">
-<strong>This tool is expereimental.</strong> The URL and functionalities might change.
+<strong>This tool is experimental.</strong> The URL and functionalities might change.
 </div></div>
 </div>
 
