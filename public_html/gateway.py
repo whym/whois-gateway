@@ -32,6 +32,7 @@ if __name__ == '__main__':
     providers = {
         'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
         'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
+        'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + x,
         'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
         'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
     }
