@@ -16,6 +16,16 @@ PROVIDERS = {
     'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
 }
 
+def order_keys(x):
+    keys = dict((y,x) for (x,y) in enumerate([
+        'asn_registry', 'asn_country_code', 'asn_date', 'query', 'asn_cidr', 'nets',
+        'name', 'description', 'address', 'city', 'state', 'country', 'postal_code',
+        'cidr', 'range', 'created', 'updated', 'handle', 'abuse_emails', 'tech_emails', 'misc_emails']))
+    if keys.has_key(x):
+        return '0_%04d' % keys[x]
+    else:
+        return '1_%s' % x
+
 def format_new_lines(s):
     return s.replace('\n', '<br/>')
 
@@ -23,7 +33,7 @@ def format_table(dct, target):
     if isinstance(dct, list):
         return '\n'.join(format_table(x, target) for x in dct)
     ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
-    for (k,v) in dct.items():
+    for (k,v) in sorted(dct.items(), key=lambda x: order_keys(x[0])):
           if v is None or len(v) == 0 or v == 'NA' or v == 'None':
               ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
           elif isinstance(v, basestring):
