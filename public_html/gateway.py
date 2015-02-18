@@ -27,6 +27,16 @@ def format_table(dct):
 def format_result(result):
     return '<div class="panel panel-default">%s</div>' % format_table(result)
 
+def lookup(ip):
+    obj = IPWhois(ip)
+    result = obj.lookup_rws()
+
+    # hack for retriving AFRINIC data when provided via RIPE's RWS
+    if 'NON-RIPE-NCC-MANAGED-ADDRESS-BLOCK' in [x['name'] if x.has_key('name') else None for x in result['nets']]:
+        result = obj.lookup()
+
+    return result
+
 if __name__ == '__main__':
     SITE = '//tools.wmflabs.org/whois'
     providers = {
@@ -43,14 +53,13 @@ if __name__ == '__main__':
     fmt = form.getfirst('format', 'html').lower()
     doLookup = form.getfirst('lookup', 'false').lower() != 'false'
 
-    result = ''
+    result = {}
     error = False
     if doLookup:
         try:
-            query = IPWhois(ip)
-            result = query.lookup_rws()
+            result = lookup(ip)
         except Exception as e:
-            result = {'error': str(e)}
+            result = {'error': repr(e)}
             error = True
     
     if providers.has_key(provider):
