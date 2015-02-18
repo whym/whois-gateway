@@ -4,16 +4,17 @@ sys.path.insert(0, '/data/project/whois/local/lib/python2.7/site-packages')
 
 from ipwhois import IPWhois
 import cgitb
+import urllib2
 import cgi
 import json
 import os
 
 PROVIDERS = {
-    'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
-    'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
-    'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + x,
-    'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
-    'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
+    'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + urllib2.quote(x),
+    'RIPENCC': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % urllib2.quote(x),
+    'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + urllib2.quote(x),
+    'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + urllib2.quote(x),
+    'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + urllib2.quote(x)
 }
 
 def order_keys(x):
@@ -132,9 +133,13 @@ if __name__ == '__main__':
 <div class="panel-heading">External links</div>
 <div class="list-group">
 '''
+
+    def make_breakable(x):
+        return x.replace(':', ':&#8203;')
+
     for (name,q) in sorted(PROVIDERS.items()):
         cls = 'list-group-item active' if result.get('asn_registry', '').upper() == name else 'list-group-item'
-        print '<a class="%s" href="%s">%s@<small>%s</small></a>' % (cls, q(ip), ip, name)
+        print '<a class="%s" href="%s">%s <small>@%s</small></a>' % (cls, q(ip), make_breakable(ip), name)
     print '</div>'
 
 print '''
