@@ -54,7 +54,7 @@ def lookup(ip):
     result = obj.lookup_rws()
 
     # hack for retriving AFRINIC data when provided via RIPE's RWS
-    if 'NON-RIPE-NCC-MANAGED-ADDRESS-BLOCK' in [x['name'] if x.has_key('name') else None for x in result['nets']]:
+    if 'NON-RIPE-NCC-MANAGED-ADDRESS-BLOCK' in [x.get('name') for x in result['nets']]:
         result = obj.lookup()
 
     return result
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 <div class="list-group">
 '''
     for (name,q) in sorted(PROVIDERS.items()):
-        cls = 'list-group-item active' if result['asn_registry'].upper() == name else 'list-group-item'
+        cls = 'list-group-item active' if result.get('asn_registry', '').upper() == name else 'list-group-item'
         print '<a class="%s" href="%s">%s@<small>%s</small></a>' % (cls, q(ip), ip, name)
     print '</div>'
 
