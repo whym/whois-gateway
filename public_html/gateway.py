@@ -8,24 +8,36 @@ import cgi
 import json
 import os
 
+PROVIDERS = {
+    'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
+    'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
+    'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + x,
+    'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
+    'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
+}
+
 def format_new_lines(s):
     return s.replace('\n', '<br/>')
-def format_table(dct):
+
+def format_table(dct, target):
     if isinstance(dct, list):
-        return '\n'.join(format_table(x) for x in dct)
+        return '\n'.join(format_table(x, target) for x in dct)
     ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
     for (k,v) in dct.items():
           if v is None or len(v) == 0 or v == 'NA' or v == 'None':
               ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
           elif isinstance(v, basestring):
-              ret += '<tr><th>%s</th><td class="text-">%s</td></tr>' % (k, format_new_lines(v))
+              if k == 'asn_registry' and PROVIDERS.has_key(v.upper()):
+                  ret += '<tr><th>%s</th><td><a href="%s"><span class="glyphicon glyphicon-link"></span>%s</a></td></tr>' % (k, PROVIDERS[v.upper()](target), v.upper())
+              else:
+                  ret += '<tr><th>%s</th><td class="text-">%s</td></tr>' % (k, format_new_lines(v))
           else:
-              ret += '<tr><th>%s</th><td>%s</td></tr>' % (k, format_table(v))
+              ret += '<tr><th>%s</th><td>%s</td></tr>' % (k, format_table(v, target))
     ret += '</tbody></table></div>'
     return ret
               
-def format_result(result):
-    return '<div class="panel panel-default">%s</div>' % format_table(result)
+def format_result(result, target):
+    return '<div class="panel panel-default">%s</div>' % format_table(result, target)
 
 def lookup(ip):
     obj = IPWhois(ip)
@@ -39,13 +51,6 @@ def lookup(ip):
 
 if __name__ == '__main__':
     SITE = '//tools.wmflabs.org/whois'
-    providers = {
-        'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + x,
-        'RIPE': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % x,
-        'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + x,
-        'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + x,
-        'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + x
-    }
     cgitb.enable(display=0, logdir='/data/project/whois/logs')
     form = cgi.FieldStorage()
     ip = form.getfirst('ip', '')
@@ -62,8 +67,8 @@ if __name__ == '__main__':
             result = {'error': repr(e)}
             error = True
     
-    if providers.has_key(provider):
-        print 'Location: %s' % providers[provider](ip)
+    if PROVIDERS.has_key(provider):
+        print 'Location: %s' % PROVIDERS[provider](ip)
         print ''
         exit()
 
@@ -99,7 +104,6 @@ if __name__ == '__main__':
 <div class="col-sm-9">
 ''' % {'site': SITE}
     print '''
-<h2>
 <form action="%(site)s/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row form-group %(error)s">
@@ -107,34 +111,29 @@ if __name__ == '__main__':
 <div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
 </div>
 </form>
-</h2>
 ''' % ({'site': SITE, 'ip': ip, 'error': 'has-error' if error else '', 'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
-    if doLookup:
-        print format_result(result)
+
+    print format_result(result, ip)
+
     print '''
 </div>
 <div class="col-sm-3">
-<h2>External links</h2>
-<ul class="list-unstyled">
+<div class="panel panel-default">
+<div class="panel-heading">External links</div>
+<div class="list-group">
 '''
-    for (name,q) in sorted(providers.items()):
-        print '<li><a href="%s"><strong>%s</strong>@%s</a></li>' % (q(ip), ip, name)
-    print '</ul>'
+    for (name,q) in sorted(PROVIDERS.items()):
+        cls = 'list-group-item active' if result['asn_registry'].upper() == name else 'list-group-item'
+        print '<a class="%s" href="%s">%s@<small>%s</small></a>' % (cls, q(ip), ip, name)
+    print '</div>'
 
 print '''
 </div>
 </div>
-<h2>Usage</h2>
-<dl>
-<dt><code>%(site)s/IPADDRESS/lookup</code></dt>
-<dd>Whois result</dd>
-<dt><code>%(site)s/IPADDRESS/lookup/json</code></dt>
-<dd>Whois result in JSON</dd>
-</dl>
-See <a href="https://github.com/whym/whois-gateway#api">API</a> for more.
 </div>
+
 <footer><div class="container">
 <hr>
-<p class="text-center text-muted"><a href="https://tools.wmflabs.org/whois/">Whois Gateway</a> <small>(<a href="https://github.com/whym/whois-gateway">source code</a>)</small> on <a href="https://tools.wmflabs.org">Tool Labs</a> / <a href="https://github.com/whym/whois-gateway/issues">Issues?</a></p></div></footer>
-</body></html>
-''' % {'site': SITE}
+<p class="text-center text-muted"><a href="https://tools.wmflabs.org/whois/">Whois Gateway</a> <small>(<a href="https://github.com/whym/whois-gateway">source code</a>, <a href="https://github.com/whym/whois-gateway#api">API</a>)</small> on <a href="https://tools.wmflabs.org">Tool Labs</a> / <a href="https://github.com/whym/whois-gateway/issues">Issues?</a></p></div></footer>
+</div>
+</body></html>''' % {'site': SITE}
