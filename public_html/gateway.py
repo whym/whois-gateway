@@ -95,9 +95,8 @@ if __name__ == '__main__':
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="/static/res/bootstrap/3.1.1/css/bootstrap.min.css">
-<link rel="stylesheet" href="/static/res/bootstrap/3.1.1/css/bootstrap-theme.min.css">
-<!-- <script src="/static/res/bootstrap/3.1.1/js/bootstrap.min.js"></script> -->
+<link rel="stylesheet" href="/static/res/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="/static/res/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 <title>Whois Gateway</title>
 </head>
 <body>
