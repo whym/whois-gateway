@@ -98,6 +98,13 @@ if __name__ == '__main__':
 <link rel="stylesheet" href="/static/res/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="/static/res/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 <title>Whois Gateway</title>
+<style type="text/css">
+
+.el { display: flex; flex-direction: row; align-items: baseline; }
+.el-ip { flex: 0 1?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
+.el-prov { flex: 1 8em; }
+
+</style>
 </head>
 <body>
 <div class="container">
@@ -123,8 +130,9 @@ if __name__ == '__main__':
 </form>
 ''' % ({'site': SITE, 'ip': ip, 'error': 'has-error' if error else '', 'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
 
-    print format_result(result, ip)
-
+    if doLookup:
+        print '<div class="panel panel-default"><div class="panel-body">%s</div></div>' % format_table(result, ip)
+    
     print '''
 </div>
 <div class="col-sm-3">
@@ -133,12 +141,9 @@ if __name__ == '__main__':
 <div class="list-group">
 '''
 
-    def make_breakable(x):
-        return x.replace(':', ':&#8203;')
-
     for (name,q) in sorted(PROVIDERS.items()):
         cls = 'list-group-item active' if result.get('asn_registry', '').upper() == name else 'list-group-item'
-        print '<a class="%s" href="%s">%s <small>@%s</small></a>' % (cls, q(ip), make_breakable(ip), name)
+        print '<a class="el %s" href="%s"><span class="el-ip">%s</span><small class="el-prov"> @%s</small></a>' % (cls, q(ip), ip, name)
     print '</div>'
 
 print '''
