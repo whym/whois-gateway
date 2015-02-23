@@ -131,7 +131,9 @@ if __name__ == '__main__':
 ''' % ({'site': SITE, 'ip': ip, 'error': 'has-error' if error else '', 'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
 
     if doLookup:
-        print '<div class="panel panel-default"><div class="panel-body">%s</div></div>' % format_table(result, ip)
+        link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
+        linkthis = 'Link this result: <a href="%s">%s</a>' % (link, link)
+        print '<div class="panel panel-default"><div class="panel-body">%s</div><div class="panel-heading">%s</div></div>' % (format_table(result, ip), linkthis)
     
     print '''
 </div>
@@ -143,7 +145,7 @@ if __name__ == '__main__':
 
     for (name,q) in sorted(PROVIDERS.items()):
         cls = 'list-group-item active' if result.get('asn_registry', '').upper() == name else 'list-group-item'
-        print '<a class="el %s" href="%s"><span class="el-ip">%s</span><small class="el-prov"> @%s</small></a>' % (cls, q(ip), ip, name)
+        print '<a class="el %s" href="%s" title="Look up %s at %s"><span class="el-ip">%s</span><small class="el-prov"> @%s</small></a>' % (cls, q(ip), ip, name, ip, name)
     print '</div>'
 
 print '''
