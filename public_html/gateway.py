@@ -17,6 +17,11 @@ PROVIDERS = {
     'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + urllib2.quote(x)
 }
 
+TOOLS = {
+    'SplineTools': lambda x: 'https://tools.wmflabs.org/splinetools/whois/ip/' + x,
+    'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&blocks=true' % x,
+}
+
 def order_keys(x):
     keys = dict((y,x) for (x,y) in enumerate([
         'asn_registry', 'asn_country_code', 'asn_date', 'query', 'asn_cidr', 'nets',
@@ -49,6 +54,18 @@ def format_table(dct, target):
               
 def format_result(result, target):
     return '<div class="panel panel-default">%s</div>' % format_table(result, target)
+
+def format_link_list(header, ls):
+    ret = '''
+<div class="panel panel-default">
+<div class="panel-heading">%s</div>
+<div class="list-group">
+''' % header
+
+    for (link,title,anchor,cls) in ls:
+        ret += '<a class="%s" href="%s" title="%s">%s</a>' % (' '.join(cls+['list-group-item']), link, title, anchor)
+    ret += '</div></div>'
+    return ret
 
 def lookup(ip):
     obj = IPWhois(ip)
@@ -138,18 +155,22 @@ if __name__ == '__main__':
     print '''
 </div>
 <div class="col-sm-3">
-<div class="panel panel-default">
-<div class="panel-heading">External links</div>
-<div class="list-group">
 '''
+    print format_link_list('Other tools',
+                           [(q(ip),
+                             'Look up %s at %s' % (ip, name),
+                             '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
+                             ['el']
+                           ) for (name,q) in sorted(TOOLS.items())])
 
-    for (name,q) in sorted(PROVIDERS.items()):
-        cls = 'list-group-item active' if result.get('asn_registry', '').upper() == name else 'list-group-item'
-        print '<a class="el %s" href="%s" title="Look up %s at %s"><span class="el-ip">%s</span><small class="el-prov"> @%s</small></a>' % (cls, q(ip), ip, name, ip, name)
-    print '</div>'
+    print format_link_list('Sources',
+                           [(q(ip),
+                             'Look up %s at %s' % (ip, name),
+                             '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
+                             ['el','active'] if result.get('asn_registry', '').upper() == name else ['el']
+                           ) for (name,q) in sorted(PROVIDERS.items())])
 
 print '''
-</div>
 </div>
 </div>
 
