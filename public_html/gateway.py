@@ -172,11 +172,15 @@ if __name__ == '__main__':
     if doLookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
         linkthis = 'Link this result: <a href="%s">%s</a>' % (link, link)
-        hostname = socket.gethostbyaddr(ip)[0]
+        hostname = None
+        try:
+            hostname = socket.gethostbyaddr(ip)[0]
+        except socket.herror:
+            pass
         print '''
-<div class="panel panel-default"><div class="panel-heading"><strong>%s</strong></div>
+<div class="panel panel-default"><div class="panel-heading">%s</div>
 <div class="panel-body">%s</div><div class="panel-heading">%s</div></div>
-''' % (hostname, format_table(result, ip), linkthis)
+''' % ('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrived)</em>', format_table(result, ip), linkthis)
 
     print '''
 </div>
