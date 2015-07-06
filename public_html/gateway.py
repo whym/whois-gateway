@@ -180,7 +180,7 @@ if __name__ == '__main__':
         print '''
 <div class="panel panel-default"><div class="panel-heading">%s</div>
 <div class="panel-body">%s</div><div class="panel-heading">%s</div></div>
-''' % ('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrived)</em>', format_table(result, ip), linkthis)
+''' % ('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>', format_table(result, ip), linkthis)
 
     print '''
 </div>
