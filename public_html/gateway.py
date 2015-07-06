@@ -8,6 +8,7 @@ import urllib2
 import cgi
 import json
 import os
+import socket
 
 PROVIDERS = {
     'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + urllib2.quote(x),
@@ -150,7 +151,8 @@ if __name__ == '__main__':
     if doLookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
         linkthis = 'Link this result: <a href="%s">%s</a>' % (link, link)
-        print '<div class="panel panel-default"><div class="panel-body">%s</div><div class="panel-heading">%s</div></div>' % (format_table(result, ip), linkthis)
+        hostname = socket.gethostbyaddr(ip)[0]
+        print '<div class="panel panel-default"><div class="panel-heading"><strong>%s</strong></div><div class="panel-body">%s</div><div class="panel-heading">%s</div></div>' % (hostname, format_table(result, ip), linkthis)
     
     print '''
 </div>
