@@ -175,7 +175,7 @@ if __name__ == '__main__':
         hostname = None
         try:
             hostname = socket.gethostbyaddr(ip)[0]
-        except socket.herror:
+        except IOError:
             pass
         print '''
 <div class="panel panel-default"><div class="panel-heading">%s</div>
