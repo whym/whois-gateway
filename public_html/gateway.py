@@ -18,7 +18,7 @@ PROVIDERS = {
 }
 
 TOOLS = {
-    'SplineTools': lambda x: 'https://tools.wmflabs.org/splinetools/whois/ip/' + x,
+    'Stalktoy': lambda x: 'https://tools.wmflabs.org/meta/stalktoy/' + x,
     'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&blocks=true' % x,
 }
 
