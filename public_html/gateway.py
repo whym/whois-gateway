@@ -2,7 +2,7 @@
 import sys
 sys.path.insert(0, '/data/project/whois/local/lib/python2.7/site-packages')
 
-from ipwhois import IPWhois
+from ipwhois import IPWhois, WhoisLookupError
 import cgitb
 import urllib2
 import cgi
@@ -83,14 +83,14 @@ def format_link_list(header, ls):
 
 
 def lookup(ip):
-    obj = IPWhois(ip)
-    result = obj.lookup_rws()
+    obj = None
+    try:
+        obj = IPWhois(ip)
+        whois = obj.lookup_rws()
+    except WhoisLookupError:
+        whois = obj.lookup()
 
-    # hack for retriving AFRINIC data when provided via RIPE's RWS
-    if 'NON-RIPE-NCC-MANAGED-ADDRESS-BLOCK' in [x.get('name') for x in result['nets']]:
-        result = obj.lookup()
-
-    return result
+    return whois
 
 
 if __name__ == '__main__':
