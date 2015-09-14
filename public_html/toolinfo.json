@@ -1,9 +1,9 @@
 {
-  "name" : "whois",
-  "title" : "whois-gateway",
-  "description" : "Whois gateway to display details about a given IP address.",
+  "name" : "whois-gateway",
+  "title" : "Whois Gateway",
+  "description" : "Ddisplay region information and other details associated with a given IP address.",
   "url" : "http://tools.wmflabs.org/whois",
   "keywords" : "tools, whois, ip, ipv4, ipv6",
   "author" : "Whym",
-  "repository" : "https://github.com/whym/whois-gateway"
+  "repository" : "https://github.com/whym/whois-gateway.git"
 }
