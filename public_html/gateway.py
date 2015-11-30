@@ -2,19 +2,25 @@
 import sys
 sys.path.insert(0, '/data/project/whois/local/lib/python2.7/site-packages')
 
+import six
 from ipwhois import IPWhois, WhoisLookupError
 import cgitb
-import urllib2
+import os
+from six.moves import urllib
 import cgi
 import json
 import socket
 
+SITE = '//tools.wmflabs.org/whois'
+
+LOGDIR = '/data/project/whois/logs'
+
 PROVIDERS = {
-    'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + urllib2.quote(x),
-    'RIPENCC': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % urllib2.quote(x),
-    'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + urllib2.quote(x),
-    'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + urllib2.quote(x),
-    'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + urllib2.quote(x)
+    'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + urllib.parse.quote(x),
+    'RIPENCC': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % urllib.parse.quote(x),
+    'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + urllib.parse.quote(x),
+    'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + urllib.parse.quote(x),
+    'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + urllib.parse.quote(x)
 }
 
 TOOLS = {
@@ -41,13 +47,15 @@ def format_new_lines(s):
 
 
 def format_table(dct, target):
+    if isinstance(dct, six.string_types):
+        return dct
     if isinstance(dct, list):
         return '\n'.join(format_table(x, target) for x in dct)
     ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
     for (k, v) in sorted(dct.items(), key=lambda x: order_keys(x[0])):
         if v is None or len(v) == 0 or v == 'NA' or v == 'None':
             ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
-        elif isinstance(v, basestring):
+        elif isinstance(v, six.string_types):
             if k == 'asn_registry' and v.upper() in PROVIDERS:
                 ret += '<tr><th>%s</th><td><a href="%s"><span class="glyphicon glyphicon-link"></span>%s</a></td></tr>' % (
                     k, PROVIDERS[v.upper()](target), v.upper()
@@ -86,7 +94,7 @@ def lookup(ip):
     obj = None
     try:
         obj = IPWhois(ip)
-        whois = obj.lookup_rws()
+        whois = obj.lookup_rdap()
     except WhoisLookupError:
         whois = obj.lookup()
 
@@ -94,13 +102,19 @@ def lookup(ip):
 
 
 if __name__ == '__main__':
-    SITE = '//tools.wmflabs.org/whois'
-    cgitb.enable(display=0, logdir='/data/project/whois/logs')
+
+    if os.path.exists(LOGDIR):
+        cgitb.enable(display=0, logdir=LOGDIR)
     form = cgi.FieldStorage()
     ip = form.getfirst('ip', '')
     provider = form.getfirst('provider', '').upper()
     fmt = form.getfirst('format', 'html').lower()
     doLookup = form.getfirst('lookup', 'false').lower() != 'false'
+    css = '''
+.el { display: flex; flex-direction: row; align-items: baseline; }
+.el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
+.el-prov { flex: 1 8em; }
+'''
 
     result = {}
     error = False
@@ -112,19 +126,19 @@ if __name__ == '__main__':
             error = True
 
     if provider in PROVIDERS:
-        print 'Location: %s' % PROVIDERS[provider](ip)
-        print ''
+        print('Location: %s' % PROVIDERS[provider](ip))
+        print('')
         exit()
 
     if fmt == 'json' and doLookup:
-        print 'Content-type: text/plain'
-        print ''
-        print json.dumps(result)
+        print('Content-type: text/plain')
+        print('')
+        print(json.dumps(result))
         exit()
 
-    print 'Content-type: text/html'
-    print ''
-    print '''<!DOCTYPE HTML>
+    print('''Content-type: text/html
+
+<!DOCTYPE HTML>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -132,11 +146,7 @@ if __name__ == '__main__':
 <link rel="stylesheet" href="/static/res/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 <title>Whois Gateway</title>
 <style type="text/css">
-
-.el { display: flex; flex-direction: row; align-items: baseline; }
-.el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
-.el-prov { flex: 1 8em; }
-
+{css}
 </style>
 </head>
 <body>
@@ -152,59 +162,57 @@ if __name__ == '__main__':
 
 <div class="row">
 <div class="col-sm-9">
-''' % {'site': SITE}
-    print '''
-<form action="%(site)s/gateway.py" role="form">
+
+<form action="{site}/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
-<div class="row form-group %(error)s">
+<div class="row form-group {error}">
 <div class="col-sm-10"><div class="input-group">
 <label class="input-group-addon" for="ipaddress-input">IP address</label>
-<input type="text" name="ip" value="%(ip)s" id="ipaddress-input" class="form-control" %(af)s/>
+<input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" {af}/>
 </div></div>
 <div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
 </div>
 </form>
-''' % ({'site': SITE,
-        'ip': ip,
-        'error': 'has-error' if error else '',
-        'af': 'autofocus onFocus="this.select();"' if not doLookup or error else ''})
+'''.format(site=SITE,
+           css=css,
+           ip=ip,
+           error= 'has-error' if error else '',
+           af= 'autofocus onFocus="this.select();"' if (not doLookup or error) else ''))
 
     if doLookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
-        linkthis = 'Link this result: <a href="%s">%s</a>' % (link, link)
+        linkthis = 'Link this result: <a href="{link}">{link}</a>'.format(link=link)
         hostname = None
         try:
             hostname = socket.gethostbyaddr(ip)[0]
         except IOError:
             pass
-        print '''
-<div class="panel panel-default"><div class="panel-heading">%s</div>
-<div class="panel-body">%s</div><div class="panel-heading">%s</div></div>
-''' % ('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>', format_table(result, ip), linkthis)
-
-    print '''
+        print('''
+<div class="panel panel-default"><div class="panel-heading">{}</div>
+<div class="panel-body">{}</div><div class="panel-heading">{}</div></div>
 </div>
 <div class="col-sm-3">
-'''
-    print format_link_list(
+'''.format('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>', format_table(result, ip), linkthis))
+
+    print(format_link_list(
         'Other tools',
         [(q(ip),
           'Look up %s at %s' % (ip, name),
           '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el'])
          for (name, q) in sorted(TOOLS.items())]
-    )
+    ))
 
-    print format_link_list(
+    print(format_link_list(
         'Sources',
         [(q(ip),
           'Look up %s at %s' % (ip, name),
           '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el', 'active'] if result.get('asn_registry', '').upper() == name else ['el'])
          for (name, q) in sorted(PROVIDERS.items())]
-    )
+    ))
 
-print '''
+print('''
 </div>
 </div>
 
@@ -219,4 +227,4 @@ print '''
 </p>
 </div></footer>
 </div>
-</body></html>''' % {'site': SITE}
+</body></html>''' % {'site': SITE})
