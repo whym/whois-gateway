@@ -114,6 +114,7 @@ if __name__ == '__main__':
 .el { display: flex; flex-direction: row; align-items: baseline; }
 .el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
 .el-prov { flex: 1 8em; }
+th { font-size: small; }
 '''
 
     result = {}
