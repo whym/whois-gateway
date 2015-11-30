@@ -25,7 +25,7 @@ PROVIDERS = {
 
 TOOLS = {
     'Stalktoy': lambda x: 'https://tools.wmflabs.org/meta/stalktoy/' + x,
-    'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&blocks=true' % x,
+    'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&amp;blocks=true' % x,
 }
 
 
@@ -61,7 +61,7 @@ def format_table(dct, target):
                     k, PROVIDERS[v.upper()](target), v.upper()
                 )
             else:
-                ret += '<tr><th>%s</th><td class="text-">%s</td></tr>' % (
+                ret += '<tr><th>%s</th><td>%s</td></tr>' % (
                     k, format_new_lines(v)
                 )
         else:
