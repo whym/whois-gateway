@@ -191,10 +191,11 @@ th { font-size: small; }
         print('''
 <div class="panel panel-default"><div class="panel-heading">{}</div>
 <div class="panel-body">{}</div><div class="panel-heading">{}</div></div>
-</div>
-<div class="col-sm-3">
 '''.format('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>', format_table(result, ip), linkthis))
 
+    print('''</div>
+<div class="col-sm-3">
+''')
     print(format_link_list(
         'Other tools',
         [(q(ip),
