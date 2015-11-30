@@ -28,13 +28,20 @@ TOOLS = {
     'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&amp;blocks=true' % x,
 }
 
+use_rdap_flag = False
+
+
+def use_rdap(flag=True):
+    use_rdap_flag = flag
+
 
 def order_keys(x):
     keys = dict((y, x) for (x, y) in enumerate([
         'asn_registry', 'asn_country_code', 'asn_date', 'asn_cidr', 'query',
         'nets', 'name', 'description', 'address',
         'city', 'state', 'country', 'postal_code',
-        'cidr', 'range', 'created', 'updated', 'handle',
+        'cidr', 'range', 'created', 'updated', 'handle', 'parent_handle',
+        'ip_version', 'start_address', 'end_address',
         'abuse_emails', 'tech_emails', 'misc_emails']))
     if x in keys:
         return '0_%04d' % keys[x]
@@ -48,7 +55,7 @@ def format_new_lines(s):
 
 def format_table(dct, target):
     if isinstance(dct, six.string_types):
-        return dct
+        return format_new_lines(dct)
     if isinstance(dct, list):
         return '\n'.join(format_table(x, target) for x in dct)
     ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
@@ -91,14 +98,12 @@ def format_link_list(header, ls):
 
 
 def lookup(ip):
-    obj = None
-    try:
-        obj = IPWhois(ip)
-        whois = obj.lookup_rdap()
-    except WhoisLookupError:
-        whois = obj.lookup()
-
-    return whois
+    obj = IPWhois(ip)
+    if use_rdap_flag:
+        # TODO: RDAP output includes less relevant infor, needs a dedicated formatter
+        return obj.lookup_rdap()
+    else:
+        return obj.lookup()
 
 
 if __name__ == '__main__':
