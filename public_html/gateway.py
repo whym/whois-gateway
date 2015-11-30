@@ -167,11 +167,11 @@ th { font-size: small; }
 <form action="{site}/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row form-group {error}">
-<div class="col-sm-10"><div class="input-group">
+<div class="col-md-10"><div class="input-group">
 <label class="input-group-addon" for="ipaddress-input">IP address</label>
 <input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" {af}/>
 </div></div>
-<div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
+<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
 </div>
 </form>
 '''.format(site=SITE,
