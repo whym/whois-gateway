@@ -31,8 +31,9 @@ TOOLS = {
 
 def order_keys(x):
     keys = dict((y, x) for (x, y) in enumerate([
-        'asn_registry', 'asn_country_code', 'asn_date', 'asn_cidr', 'query',
-        'nets', 'name', 'description', 'address',
+        'asn_registry', 'asn_country_code', 'asn_cidr', 'query',
+        'nets', 'asn', 'asn_date',
+        'name', 'description', 'address',
         'city', 'state', 'country', 'postal_code',
         'cidr', 'range', 'created', 'updated', 'handle', 'parent_handle',
         'ip_version', 'start_address', 'end_address',
