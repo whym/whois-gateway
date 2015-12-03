@@ -114,7 +114,7 @@ if __name__ == '__main__':
     ip = form.getfirst('ip', '')
     provider = form.getfirst('provider', '').upper()
     fmt = form.getfirst('format', 'html').lower()
-    doLookup = form.getfirst('lookup', 'false').lower() != 'false'
+    do_lookup = form.getfirst('lookup', 'false').lower() != 'false'
     css = '''
 .el { display: flex; flex-direction: row; align-items: baseline; }
 .el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
@@ -124,7 +124,7 @@ th { font-size: small; }
 
     result = {}
     error = False
-    if doLookup:
+    if do_lookup:
         try:
             result = lookup(ip)
         except Exception as e:
@@ -136,7 +136,7 @@ th { font-size: small; }
         print('')
         exit()
 
-    if fmt == 'json' and doLookup:
+    if fmt == 'json' and do_lookup:
         print('Content-type: text/plain')
         print('')
         print(json.dumps(result))
@@ -183,9 +183,9 @@ th { font-size: small; }
            css=css,
            ip=ip,
            error= 'has-error' if error else '',
-           af= 'autofocus onFocus="this.select();"' if (not doLookup or error) else ''))
+           af= 'autofocus onFocus="this.select();"' if (not do_lookup or error) else ''))
 
-    if doLookup:
+    if do_lookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
         linkthis = 'Link this result: <a href="{link}">{link}</a>'.format(link=link)
         hostname = None
