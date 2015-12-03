@@ -219,7 +219,7 @@ th { font-size: small; }
          for (name, q) in sorted(PROVIDERS.items())]
     ))
 
-print('''
+    print('''
 </div>
 </div>
 
