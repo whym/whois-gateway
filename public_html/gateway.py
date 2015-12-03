@@ -28,12 +28,6 @@ TOOLS = {
     'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&amp;blocks=true' % x,
 }
 
-use_rdap_flag = False
-
-
-def use_rdap(flag=True):
-    use_rdap_flag = flag
-
 
 def order_keys(x):
     keys = dict((y, x) for (x, y) in enumerate([
@@ -97,9 +91,9 @@ def format_link_list(header, ls):
     return ret
 
 
-def lookup(ip):
+def lookup(ip, rdap=False):
     obj = IPWhois(ip)
-    if use_rdap_flag:
+    if rdap:
         # TODO: RDAP output includes less relevant infor, needs a dedicated formatter
         return obj.lookup_rdap()
     else:
@@ -115,6 +109,7 @@ if __name__ == '__main__':
     provider = form.getfirst('provider', '').upper()
     fmt = form.getfirst('format', 'html').lower()
     do_lookup = form.getfirst('lookup', 'false').lower() != 'false'
+    use_rdap = form.getfirst('rdap', 'false').lower() != 'false'
     css = '''
 .el { display: flex; flex-direction: row; align-items: baseline; }
 .el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
@@ -126,7 +121,7 @@ th { font-size: small; }
     error = False
     if do_lookup:
         try:
-            result = lookup(ip)
+            result = lookup(ip, use_rdap)
         except Exception as e:
             result = {'error': repr(e)}
             error = True
