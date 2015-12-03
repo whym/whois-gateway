@@ -116,6 +116,7 @@ if __name__ == '__main__':
 .el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
 .el-prov { flex: 1 8em; }
 th { font-size: small; }
+.link_result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
 '''
 
     result = {}
@@ -183,7 +184,7 @@ th { font-size: small; }
 
     if do_lookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
-        linkthis = 'Link this result: <a href="{link}">{link}</a>'.format(link=link)
+        linkthis = '<a href="{link}">Link this result</a>: <code class="link_result">{link}</code>'.format(link=link)
         hostname = None
         try:
             hostname = socket.gethostbyaddr(ip)[0]
