@@ -84,7 +84,7 @@ def format_link_list(header, ls):
 ''' % header
 
     for (link, title, anchor, cls) in ls:
-        ret += '<a class="%s" href="%s" title="%s">%s</a>' % (
+        ret += '<a class="%s" href="%s" title="%s">%s</a>\n' % (
             ' '.join(cls+['list-group-item']),
             link, title, anchor
         )
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 .el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
 .el-prov { flex: 1 8em; }
 th { font-size: small; }
-.link_result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
+.link-result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
 '''
 
     result = {}
@@ -184,16 +184,24 @@ th { font-size: small; }
 
     if do_lookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
-        linkthis = '<a href="{link}">Link this result</a>: <code class="link_result">{link}</code>'.format(link=link)
         hostname = None
         try:
             hostname = socket.gethostbyaddr(ip)[0]
         except IOError:
             pass
         print('''
-<div class="panel panel-default"><div class="panel-heading">{}</div>
-<div class="panel-body">{}</div><div class="panel-heading">{}</div></div>
-'''.format('<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>', format_table(result, ip), linkthis))
+<div class="panel panel-default"><div class="panel-heading">{hostname}</div>
+<div class="panel-body">{table}</div></div>
+
+<div class="row form-group">
+<div class="col-md-12"><div class="input-group">
+<label class="input-group-addon"><a href="{link}">Link this result</a></label>
+<output class="form-control link-result">{link}</output>
+</div></div>
+</div>
+'''.format(hostname='<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>',
+           table=format_table(result, ip),
+           link=link))
 
     print('''</div>
 <div class="col-sm-3">
