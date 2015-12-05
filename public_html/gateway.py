@@ -95,7 +95,7 @@ def format_link_list(header, ls):
 def lookup(ip, rdap=False):
     obj = IPWhois(ip)
     if rdap:
-        # TODO: RDAP output includes less relevant infor, needs a dedicated formatter
+        # TODO: RDAP output includes less relevant info, needs a dedicated formatter
         return obj.lookup_rdap()
     else:
         return obj.lookup()
