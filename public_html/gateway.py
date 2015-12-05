@@ -44,6 +44,15 @@ def order_keys(x):
         return '1_%s' % x
 
 
+def lookup(ip, rdap=False):
+    obj = IPWhois(ip)
+    if rdap:
+        # TODO: RDAP output includes less relevant info, needs a dedicated formatter
+        return obj.lookup_rdap()
+    else:
+        return obj.lookup()
+
+
 def format_new_lines(s):
     return s.replace('\n', '<br/>')
 
@@ -92,20 +101,7 @@ def format_link_list(header, ls):
     return ret
 
 
-def lookup(ip, rdap=False):
-    obj = IPWhois(ip)
-    if rdap:
-        # TODO: RDAP output includes less relevant info, needs a dedicated formatter
-        return obj.lookup_rdap()
-    else:
-        return obj.lookup()
-
-
-if __name__ == '__main__':
-
-    if os.path.exists(LOGDIR):
-        cgitb.enable(display=0, logdir=LOGDIR)
-    form = cgi.FieldStorage()
+def format_page(form):
     ip = form.getfirst('ip', '')
     provider = form.getfirst('provider', '').upper()
     fmt = form.getfirst('format', 'html').lower()
@@ -129,17 +125,12 @@ th { font-size: small; }
             error = True
 
     if provider in PROVIDERS:
-        print('Location: %s' % PROVIDERS[provider](ip))
-        print('')
-        exit()
+        return 'Location: {}\n\n'.format(PROVIDERS[provider](ip))
 
     if fmt == 'json' and do_lookup:
-        print('Content-type: text/plain')
-        print('')
-        print(json.dumps(result))
-        exit()
-
-    print('''Content-type: text/html
+        return 'Content-type: text/plain\n\n{}\n'.format(json.dumps(result))
+        
+    ret = '''Content-type: text/html
 
 <!DOCTYPE HTML>
 <html lang="en">
@@ -180,7 +171,7 @@ th { font-size: small; }
            css=css,
            ip=ip,
            error= 'has-error' if error else '',
-           af= 'autofocus onFocus="this.select();"' if (not do_lookup or error) else ''))
+           af= 'autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
 
     if do_lookup:
         link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
@@ -189,7 +180,7 @@ th { font-size: small; }
             hostname = socket.gethostbyaddr(ip)[0]
         except IOError:
             pass
-        print('''
+        ret += '''
 <div class="panel panel-default"><div class="panel-heading">{hostname}</div>
 <div class="panel-body">{table}</div></div>
 
@@ -201,37 +192,37 @@ th { font-size: small; }
 </div>
 '''.format(hostname='<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>',
            table=format_table(result, ip),
-           link=link))
+           link=link)
 
-    print('''</div>
+    ret += '''</div>
 <div class="col-sm-3">
-''')
-    print(format_link_list(
+'''
+    ret += format_link_list(
         'Other tools',
         [(q(ip),
           'Look up %s at %s' % (ip, name),
           '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el'])
          for (name, q) in sorted(TOOLS.items())]
-    ))
+    )
 
-    print(format_link_list(
+    ret += format_link_list(
         'Sources',
         [(q(ip),
           'Look up %s at %s' % (ip, name),
           '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el', 'active'] if result.get('asn_registry', '').upper() == name else ['el'])
          for (name, q) in sorted(PROVIDERS.items())]
-    ))
+    )
 
-    print('''
+    ret += '''
 </div>
 </div>
 
 <footer><div class="container">
 <hr>
 <p class="text-center text-muted">
-<a href="https://tools.wmflabs.org/whois/">Whois Gateway</a>
+<a href="{site}">Whois Gateway</a>
 <small>(<a href="https://github.com/whym/whois-gateway">source code</a>,
         <a href="https://github.com/whym/whois-gateway#api">API</a>)</small>
         on <a href="https://tools.wmflabs.org">Tool Labs</a> /
@@ -239,4 +230,12 @@ th { font-size: small; }
 </p>
 </div></footer>
 </div>
-</body></html>''' % {'site': SITE})
+</body></html>'''.format(site=SITE)
+
+    return ret
+
+if __name__ == '__main__':
+
+    if os.path.exists(LOGDIR):
+        cgitb.enable(display=0, logdir=LOGDIR)
+    print(format_page(cgi.FieldStorage()))
