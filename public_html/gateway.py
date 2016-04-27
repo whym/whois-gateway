@@ -50,7 +50,7 @@ def lookup(ip, rdap=False):
         # TODO: RDAP output includes less relevant info, needs a dedicated formatter
         return obj.lookup_rdap()
     else:
-        ret = obj.lookup()
+        ret = obj.lookup_whois()
         # remove some fields that clutter
         for x in ['raw', 'raw_referral', 'referral']:
             ret.pop(x, None)

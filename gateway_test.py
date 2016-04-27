@@ -16,7 +16,7 @@ class TestGateway(unittest.TestCase):
     @mock.patch('gateway.IPWhois')
     def test_lookup(self, MockClass):
         instance = MockClass.return_value
-        instance.lookup.return_value = {'I am': 'nowhere', 'raw': 'foobar'}
+        instance.lookup_whois.return_value = {'I am': 'nowhere', 'raw': 'foobar'}
         self.assertIn('nowhere', str(gateway.lookup('8.8.8.8')).lower())
         self.assertNotIn('foobar', str(gateway.lookup('8.8.8.8')).lower())
 

@@ -15,4 +15,4 @@ Web-based whois gateway written in Python for lighttpd
 
 ## License
 
-See [License](https://github.com/whym/whois-gateway/blob/master/LICENSE.md).
+See [LICENSE.md](https://github.com/whym/whois-gateway/blob/master/LICENSE.md).
