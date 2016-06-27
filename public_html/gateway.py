@@ -119,6 +119,11 @@ th { font-size: small; }
 .link-result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
 '''
 
+    # remove spaces, the zero-width space and left-to-right mark
+    if six.PY2:
+        ip = ip.decode('utf-8')
+    ip = ip.strip(u' \u200b\u200e')
+
     result = {}
     error = False
     if do_lookup:
