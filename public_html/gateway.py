@@ -18,16 +18,16 @@ SITE = '//tools.wmflabs.org/whois'
 LOGDIR = '/data/project/whois/logs'
 
 PROVIDERS = {
-    'ARIN': lambda x: 'http://whois.arin.net/rest/ip/' + urllib.parse.quote(x),
+    'ARIN': lambda x: 'https://whois.arin.net/rest/ip/' + urllib.parse.quote(x),
     'RIPENCC': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % urllib.parse.quote(x),
     'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + urllib.parse.quote(x),
-    'APNIC': lambda x: 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + urllib.parse.quote(x),
+    'APNIC': lambda x: 'https://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + urllib.parse.quote(x),
     'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + urllib.parse.quote(x)
 }
 
 TOOLS = {
     'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&amp;blocks=true' % x,
-    'Proxy API Checker': lambda x: 'https://tools.wmflabs.org/ipcheck/index.php?ip=' + x,
+    'Proxy Checker': lambda x: 'https://tools.wmflabs.org/ipcheck/index.php?ip=' + x,
     'Stalktoy': lambda x: 'https://tools.wmflabs.org/meta/stalktoy/' + x
 }
 
@@ -73,13 +73,13 @@ def format_table(dct, target):
         return format_new_lines(dct)
     if isinstance(dct, list):
         return '\n'.join(format_table(x, target) for x in dct)
-    ret = '<div class="table-responsive"><table class="table table-condensed"><tbody>'
+    ret = '<table class="table table-sm"><tbody>'
     for (k, v) in sorted(dct.items(), key=lambda x: order_keys(x[0])):
         if v is None or len(v) == 0 or v == 'NA' or v == 'None':
             ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
         elif isinstance(v, six.string_types):
             if k == 'asn_registry' and v.upper() in PROVIDERS:
-                ret += '<tr><th>%s</th><td><a href="%s"><span class="glyphicon glyphicon-link"></span>%s</a></td></tr>' % (
+                ret += '<tr><th>%s</th><td><a href="%s"><span class="fa fa-home"></span>%s</a></td></tr>' % (
                     k, PROVIDERS[v.upper()](target), v.upper()
                 )
             elif k == 'warning':
@@ -92,24 +92,24 @@ def format_table(dct, target):
                 )
         else:
             ret += '<tr><th>%s</th><td>%s</td></tr>' % (k, format_table(v, target))
-    ret += '</tbody></table></div>'
+    ret += '</tbody></table>'
     return ret
 
 
 def format_result(result, target):
-    return '<div class="panel panel-default">%s</div>' % format_table(result, target)
+    return '<div class="card">%s</div>' % format_table(result, target)
 
 
 def format_link_list(header, ls):
     ret = '''
-<div class="panel panel-default">
-<div class="panel-heading">%s</div>
-<div class="list-group">
+<div class="card mb-2">
+<div class="card-header list-group-flush">%s</div>
+<div class="list-group list-group-flush">
 ''' % header
 
     for (link, title, anchor, cls) in ls:
         ret += '<a class="%s" href="%s" title="%s">%s</a>\n' % (
-            ' '.join(cls+['list-group-item']),
+            ' '.join(cls+['list-group-item', 'list-group-item-action']),
             link, title, anchor
         )
     ret += '</div></div>'
@@ -143,11 +143,11 @@ def format_page(form):
     use_rdap = form.getfirst('rdap', 'false').lower() != 'false'
     css = '''
 .el { display: flex; flex-direction: row; align-items: baseline; }
-.el-ip { flex: 0?; max-width: 70%%; overflow: hidden; text-overflow: ellipsis; padding-right: .2em; }
+.el-ip { flex: 0?; max-width: 60%; }
 .el-prov { flex: 1 8em; }
-th { font-size: small; }
+th { font-size: smaller; }
 .link-result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
-'''
+'''.strip()
 
     # remove spaces, the zero-width space and left-to-right mark
     if six.PY2:
@@ -179,8 +179,8 @@ th { font-size: small; }
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <title>Whois Gateway - {subtitle}</title>
 <style type="text/css">
 {css}
@@ -202,12 +202,12 @@ th { font-size: small; }
 
 <form action="{site}/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
-<div class="row form-group {error}">
-<div class="col-md-10"><div class="input-group">
-<label class="input-group-addon" for="ipaddress-input">IP address</label>
+<div class="form-row form-group {error}">
+<div class="col-md-10"><div class="input-group-prepend">
+<label class="input-group-text" for="ipaddress-input">IP address</label>
 <input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" placeholder="{placeholder}" {af}/>
 </div></div>
-<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
+<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
 </div>
 </form>
 '''.format(site=SITE,
@@ -215,7 +215,7 @@ th { font-size: small; }
            subtitle=ip if ip != '' else SUBTITLE,
            ip=ip,
            placeholder='e.g. ' + socket.gethostbyname(socket.gethostname()),
-           error='has-error' if error else '',
+           error='has-danger' if error else '',
            af='autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
 
     if do_lookup:
@@ -226,12 +226,12 @@ th { font-size: small; }
         except IOError:
             pass
         ret += '''
-<div class="panel panel-default"><div class="panel-heading">{hostname}</div>
-<div class="panel-body">{table}</div></div>
+<div class="card mb-3"><div class="card-header">{hostname}</div>
+<div class="card-body">{table}</div></div>
 
-<div class="row form-group">
-<div class="col-md-12"><div class="input-group">
-<label class="input-group-addon"><a href="{link}">Link this result</a></label>
+<div class="form-row form-group">
+<div class="col-md-12"><div class="input-group-prepend">
+<label class="input-group-text"><a href="{link}">Link this result</a></label>
 <output class="form-control link-result">{link}</output>
 </div></div>
 </div>
@@ -246,7 +246,7 @@ th { font-size: small; }
         'Other tools',
         [(q(ip),
           'Look up %s at %s' % (ip, name),
-          '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
+          '<small class="el-ip text-truncate">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el'])
          for (name, q) in sorted(TOOLS.items())]
     )
@@ -255,7 +255,7 @@ th { font-size: small; }
         'Sources',
         [(q(ip),
           'Look up %s at %s' % (ip, name),
-          '<small class="el-ip">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
+          '<small class="el-ip text-truncate">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el', 'active'] if result.get('asn_registry', '').upper() == name else ['el'])
          for (name, q) in sorted(PROVIDERS.items())]
     )
