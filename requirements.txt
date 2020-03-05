@@ -1,3 +1,2 @@
 ipwhois==0.13.0
 six
-nose
