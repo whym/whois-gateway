@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- mode: python -*-
 import sys
 sys.path.insert(0, '/data/project/whois/local/lib/python2.7/site-packages')
 
@@ -10,6 +11,7 @@ from six.moves import urllib
 import cgi
 import json
 import socket
+import re
 
 SITE = '//tools.wmflabs.org/whois'
 
@@ -29,10 +31,14 @@ TOOLS = {
     'Stalktoy': lambda x: 'https://tools.wmflabs.org/meta/stalktoy/' + x
 }
 
+TOOL = lambda x: 'https://tools.wmflabs.org/whois/%s/lookup' % x
+
+SUBTITLE = "Find details about an IP address's owner"
+
 
 def order_keys(x):
     keys = dict((y, x) for (x, y) in enumerate([
-        'asn_registry', 'asn_country_code', 'asn_cidr', 'query',
+        'warning', 'asn_registry', 'asn_country_code', 'asn_cidr', 'query',
         'nets', 'asn', 'asn_date',
         'name', 'description', 'address',
         'city', 'state', 'country', 'postal_code',
@@ -53,7 +59,7 @@ def lookup(ip, rdap=False):
     else:
         ret = obj.lookup_whois()
         # remove some fields that clutter
-        for x in ['raw', 'raw_referral', 'referral']:
+        for x in []:
             ret.pop(x, None)
         return ret
 
@@ -75,6 +81,10 @@ def format_table(dct, target):
             if k == 'asn_registry' and v.upper() in PROVIDERS:
                 ret += '<tr><th>%s</th><td><a href="%s"><span class="glyphicon glyphicon-link"></span>%s</a></td></tr>' % (
                     k, PROVIDERS[v.upper()](target), v.upper()
+                )
+            elif k == 'warning':
+                ret += '<tr class="bg-warning"><th>%s</th><td>%s</td></tr>' % (
+                    k, format_new_lines(v)
                 )
             else:
                 ret += '<tr><th>%s</th><td>%s</td></tr>' % (
@@ -106,10 +116,29 @@ def format_link_list(header, ls):
     return ret
 
 
+def look_like_ip_address(ip):
+    return re.match(r'[^0-9a-fA-F\.\:/]')
+
+
+def split_prefixed_ip_address(ip):
+    if ip.find('/') > 0:
+        return tuple(ip.split('/', 2))
+    else:
+        return (ip, None)
+
+
+def sanitize_ip(s):
+    return re.sub(r'[^0-9a-fA-F\.\:/]', 'X', s)
+
+
+def sanitize_atoz(s):
+    return re.sub(r'[^a-zA-Z]', 'X', s)
+
+
 def format_page(form):
-    ip = form.getfirst('ip', '')
-    provider = form.getfirst('provider', '').upper()
-    fmt = form.getfirst('format', 'html').lower()
+    ip = sanitize_ip(form.getfirst('ip', ''))
+    provider = sanitize_atoz(form.getfirst('provider', '')).upper()
+    fmt = sanitize_atoz(form.getfirst('format', 'html')).lower()
     do_lookup = form.getfirst('lookup', 'false').lower() != 'false'
     use_rdap = form.getfirst('rdap', 'false').lower() != 'false'
     css = '''
@@ -125,21 +154,25 @@ th { font-size: small; }
         ip = ip.decode('utf-8')
     ip = ip.strip(u' \u200b\u200e')
 
+    (ipn, rest) = split_prefixed_ip_address(ip)
+
     result = {}
     error = False
     if do_lookup:
         try:
-            result = lookup(ip, use_rdap)
+            result = lookup(ipn, use_rdap)
         except Exception as e:
             result = {'error': repr(e)}
             error = True
+    if rest:
+        result['warning'] = 'prefixed addresses are not supported; "{}" is ignored'.format(rest)
 
     if provider in PROVIDERS:
         return 'Location: {}\n\n'.format(PROVIDERS[provider](ip))
 
-    if fmt == 'json' and do_lookup:
+    if fmt == 'json':
         return 'Content-type: text/plain\n\n{}\n'.format(json.dumps(result))
-        
+
     ret = '''Content-type: text/html
 
 <!DOCTYPE HTML>
@@ -148,7 +181,7 @@ th { font-size: small; }
 <meta charset="utf-8">
 <link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap-theme.min.css">
-<title>Whois Gateway</title>
+<title>Whois Gateway - {subtitle}</title>
 <style type="text/css">
 {css}
 </style>
@@ -172,22 +205,24 @@ th { font-size: small; }
 <div class="row form-group {error}">
 <div class="col-md-10"><div class="input-group">
 <label class="input-group-addon" for="ipaddress-input">IP address</label>
-<input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" {af}/>
+<input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" placeholder="{placeholder}" {af}/>
 </div></div>
 <div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-default btn-block"/></div>
 </div>
 </form>
 '''.format(site=SITE,
            css=css,
+           subtitle=ip if ip != '' else SUBTITLE,
            ip=ip,
-           error= 'has-error' if error else '',
-           af= 'autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
+           placeholder='e.g. ' + socket.gethostbyname(socket.gethostname()),
+           error='has-error' if error else '',
+           af='autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
 
     if do_lookup:
-        link = 'https://tools.wmflabs.org/whois/%s/lookup' % ip
+        link = TOOL(ip)
         hostname = None
         try:
-            hostname = socket.gethostbyaddr(ip)[0]
+            hostname = socket.gethostbyaddr(ipn)[0]
         except IOError:
             pass
         ret += '''
@@ -243,6 +278,7 @@ th { font-size: small; }
 </body></html>'''.format(site=SITE)
 
     return ret
+
 
 if __name__ == '__main__':
 
