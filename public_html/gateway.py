@@ -18,20 +18,20 @@ SITE = '//tools.wmflabs.org/whois'
 LOGDIR = '/data/project/whois/logs'
 
 PROVIDERS = {
-    'ARIN': lambda x: 'https://whois.arin.net/rest/ip/' + urllib.parse.quote(x),
-    'RIPENCC': lambda x: 'https://apps.db.ripe.net/search/query.html?searchtext=%s#resultsAnchor' % urllib.parse.quote(x),
-    'AFRINIC': lambda x: 'http://afrinic.net/cgi-bin/whois?searchtext=' + urllib.parse.quote(x),
-    'APNIC': lambda x: 'https://wq.apnic.net/apnic-bin/whois.pl?searchtext=' + urllib.parse.quote(x),
-    'LACNIC': lambda x: 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query=' + urllib.parse.quote(x)
+    'ARIN': 'https://whois.arin.net/rest/ip/{0}',
+    'RIPENCC': 'https://apps.db.ripe.net/search/query.html?searchtext={0}#resultsAnchor',
+    'AFRINIC': 'http://afrinic.net/cgi-bin/whois?searchtext={0}',
+    'APNIC': 'https://wq.apnic.net/apnic-bin/whois.pl?searchtext={0}',
+    'LACNIC': 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query={0}'
 }
 
 TOOLS = {
-    'GlobalContribs': lambda x: 'https://tools.wmflabs.org/guc/index.php?user=%s&amp;blocks=true' % x,
-    'Proxy Checker': lambda x: 'https://tools.wmflabs.org/ipcheck/index.php?ip=' + x,
-    'Stalktoy': lambda x: 'https://tools.wmflabs.org/meta/stalktoy/' + x
+    'GlobalContribs': 'https://tools.wmflabs.org/guc/index.php?user={0}&amp;blocks=true',
+    'Proxy Checker': 'https://tools.wmflabs.org/ipcheck/index.php?ip={0}',
+    'Stalktoy': 'https://tools.wmflabs.org/meta/stalktoy/{0}'
 }
 
-TOOL = lambda x: 'https://tools.wmflabs.org/whois/%s/lookup' % x
+TOOL_URL = 'https://tools.wmflabs.org/whois/{0}/lookup'
 
 SUBTITLE = "Find details about an IP address's owner"
 
@@ -80,10 +80,14 @@ def format_table(dct, target):
         elif isinstance(v, six.string_types):
             if k == 'asn_registry' and v.upper() in PROVIDERS:
                 ret += '<tr><th>%s</th><td><a href="%s"><span class="fa fa-home"></span>%s</a></td></tr>' % (
-                    k, PROVIDERS[v.upper()](target), v.upper()
+                    k, PROVIDERS[v.upper()].format(target), v.upper()
                 )
             elif k == 'warning':
-                ret += '<tr class="bg-warning"><th>%s</th><td>%s</td></tr>' % (
+                ret += '<tr><th class="bg-warning">%s</th><td>%s</td></tr>' % (
+                    k, format_new_lines(v)
+                )
+            elif k == 'error':
+                ret += '<tr><th class="text-white bg-danger">%s</th><td>%s</td></tr>' % (
                     k, format_new_lines(v)
                 )
             else:
@@ -122,7 +126,7 @@ def look_like_ip_address(ip):
 
 def split_prefixed_ip_address(ip):
     if ip.find('/') > 0:
-        return tuple(ip.split('/', 2))
+        return tuple(ip.split('/', 1))
     else:
         return (ip, None)
 
@@ -168,7 +172,7 @@ th { font-size: smaller; }
         result['warning'] = 'prefixed addresses are not supported; "{}" is ignored'.format(rest)
 
     if provider in PROVIDERS:
-        return 'Location: {}\n\n'.format(PROVIDERS[provider](ip))
+        return 'Location: {}\n\n'.format(PROVIDERS[provider].format(ip))
 
     if fmt == 'json':
         return 'Content-type: text/plain\n\n{}\n'.format(json.dumps(result))
@@ -219,7 +223,7 @@ th { font-size: smaller; }
            af='autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
 
     if do_lookup:
-        link = TOOL(ip)
+        link = TOOL_URL.format(ip)
         hostname = None
         try:
             hostname = socket.gethostbyaddr(ipn)[0]
@@ -244,20 +248,20 @@ th { font-size: smaller; }
 '''
     ret += format_link_list(
         'Other tools',
-        [(q(ip),
+        [(fmt.format(ip),
           'Look up %s at %s' % (ip, name),
           '<small class="el-ip text-truncate">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el'])
-         for (name, q) in sorted(TOOLS.items())]
+         for (name, fmt) in sorted(TOOLS.items())]
     )
 
     ret += format_link_list(
         'Sources',
-        [(q(ip),
+        [(fmt.format(ip),
           'Look up %s at %s' % (ip, name),
           '<small class="el-ip text-truncate">%s</small><span class="el-prov"> @%s</span>' % (ip, name),
           ['el', 'active'] if result.get('asn_registry', '').upper() == name else ['el'])
-         for (name, q) in sorted(PROVIDERS.items())]
+         for (name, fmt) in sorted(PROVIDERS.items())]
     )
 
     ret += '''

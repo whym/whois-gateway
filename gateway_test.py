@@ -28,7 +28,7 @@ def get_json(ip):
 class TestGateway(unittest.TestCase):
 
     def test_arin(self):
-        self.assertEqual(gateway.PROVIDERS['ARIN']('11.22.33.44'), 'https://whois.arin.net/rest/ip/11.22.33.44')
+        self.assertEqual(gateway.PROVIDERS['ARIN'].format('11.22.33.44'), 'https://whois.arin.net/rest/ip/11.22.33.44')
 
     @mock.patch('gateway.IPWhois')
     def test_lookup(self, MockClass):
