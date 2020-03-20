@@ -28,7 +28,8 @@ def get_json(ip):
 class TestGateway(unittest.TestCase):
 
     def test_arin(self):
-        self.assertEqual(gateway.PROVIDERS['ARIN'].format('11.22.33.44'), 'https://whois.arin.net/rest/ip/11.22.33.44')
+        self.assertEqual(gateway.PROVIDERS['ARIN'].format('11.22.33.44'),
+                         'https://whois.arin.net/rest/ip/11.22.33.44')
 
     @mock.patch('gateway.IPWhois')
     def test_lookup(self, MockClass):
@@ -37,7 +38,8 @@ class TestGateway(unittest.TestCase):
         self.assertIn('nowhere', str(gateway.lookup('8.8.8.8')).lower())
 
     def test_split_prefixed_ip_address(self):
-        self.assertEqual(('8.8.8.8', '16'), gateway.split_prefixed_ip_address('8.8.8.8/16'))
+        self.assertEqual(('8.8.8.8', '16'),
+                         gateway.split_prefixed_ip_address('8.8.8.8/16'))
 
     @mock.patch('gateway.IPWhois')
     def test_lookup_json(self, MockClass):
@@ -53,6 +55,7 @@ class TestGateway(unittest.TestCase):
         if six.PY2:
             ip = ip.encode('utf-8')
         self.assertIn(u'X1.2.3.4X', get_html(ip))
+
 
 if __name__ == '__main__':
     unittest.main()

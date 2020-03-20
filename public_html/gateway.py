@@ -120,10 +120,6 @@ def format_link_list(header, ls):
     return ret
 
 
-def look_like_ip_address(ip):
-    return re.match(r'[^0-9a-fA-F\.\:/]')
-
-
 def split_prefixed_ip_address(ip):
     if ip.find('/') > 0:
         return tuple(ip.split('/', 1))
@@ -193,12 +189,9 @@ th { font-size: smaller; }
 <body>
 <div class="container">
 <div class="row">
-<div class="col-sm-5">
+<div class="col-sm">
 <header><h1>Whois Gateway</h1></header>
 </div>
-<div class="col-sm-7"><div class="alert alert-warning" role="alert">
-<strong>This tool is experimental.</strong> The URL and functionalities might change.
-</div></div>
 </div>
 
 <div class="row">
@@ -207,11 +200,11 @@ th { font-size: smaller; }
 <form action="{site}/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="form-row form-group {error}">
-<div class="col-md-10"><div class="input-group-prepend">
+<div class="col-sm"><div class="input-group-prepend">
 <label class="input-group-text" for="ipaddress-input">IP address</label>
 <input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" placeholder="{placeholder}" {af}/>
 </div></div>
-<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
+<div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
 </div>
 </form>
 '''.format(site=SITE,
@@ -234,7 +227,7 @@ th { font-size: smaller; }
 <div class="card-body">{table}</div></div>
 
 <div class="form-row form-group">
-<div class="col-md-12"><div class="input-group-prepend">
+<div class="col-12"><div class="input-group-prepend">
 <label class="input-group-text"><a href="{link}">Link this result</a></label>
 <output class="form-control link-result">{link}</output>
 </div></div>
