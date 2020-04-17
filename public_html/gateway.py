@@ -27,7 +27,7 @@ PROVIDERS = {
 
 TOOLS = {
     'GlobalContribs': 'https://tools.wmflabs.org/guc/index.php?user={0}&amp;blocks=true',
-    'Proxy Checker': 'https://tools.wmflabs.org/ipcheck/index.php?ip={0}',
+    'Proxy Checker': 'https://ipcheck.toolforge.org/index.php?ip={0}',
     'Stalktoy': 'https://tools.wmflabs.org/meta/stalktoy/{0}'
 }
 
