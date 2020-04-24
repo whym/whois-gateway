@@ -19,14 +19,14 @@ LOGDIR = '/data/project/whois/logs'
 
 PROVIDERS = {
     'ARIN': 'https://whois.arin.net/rest/ip/{0}',
-    'RIPENCC': 'https://apps.db.ripe.net/search/query.html?searchtext={0}#resultsAnchor',
-    'AFRINIC': 'http://afrinic.net/cgi-bin/whois?searchtext={0}',
+    'RIPENCC': 'https://apps.db.ripe.net/db-web-ui/query?searchtext={0}',
+    'AFRINIC': 'https://www.afrinic.net/whois-web/public/?lang=en',
     'APNIC': 'https://wq.apnic.net/apnic-bin/whois.pl?searchtext={0}',
-    'LACNIC': 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&amp;query={0}'
+    'LACNIC': 'http://lacnic.net/cgi-bin/lacnic/whois?lg=EN&query={0}'
 }
 
 TOOLS = {
-    'GlobalContribs': 'https://tools.wmflabs.org/guc/index.php?user={0}&amp;blocks=true',
+    'GlobalContribs': 'https://tools.wmflabs.org/guc/index.php?user={0}&blocks=true',
     'Proxy Checker': 'https://tools.wmflabs.org/ipcheck/index.php?ip={0}',
     'Stalktoy': 'https://tools.wmflabs.org/meta/stalktoy/{0}'
 }
