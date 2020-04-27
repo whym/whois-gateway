@@ -13,7 +13,7 @@ import json
 import socket
 import re
 
-SITE = '//tools.wmflabs.org/whois'
+SITE = '//whois.toolforge.org/'
 
 LOGDIR = '/data/project/whois/logs'
 
@@ -31,7 +31,7 @@ TOOLS = {
     'Stalktoy': 'https://tools.wmflabs.org/meta/stalktoy/{0}'
 }
 
-TOOL_URL = 'https://tools.wmflabs.org/whois/{0}/lookup'
+TOOL_URL = 'https://whois.toolforge.org/w/{0}/lookup'
 
 SUBTITLE = "Find details about an IP address's owner"
 
