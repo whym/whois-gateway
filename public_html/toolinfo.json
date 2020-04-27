@@ -2,7 +2,7 @@
   "name" : "whois-gateway",
   "title" : "Whois Gateway",
   "description" : "Display region information and other details associated with a given IP address.",
-  "url" : "http://tools.wmflabs.org/whois",
+  "url" : "http://whois.toolforge.org/",
   "keywords" : "tools, whois, ip, ipaddress, ipv4, ipv6",
   "author" : "Whym",
   "repository" : "https://github.com/whym/whois-gateway.git"
