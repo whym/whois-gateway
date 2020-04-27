@@ -13,7 +13,7 @@ import json
 import socket
 import re
 
-SITE = '//whois.toolforge.org/'
+SITE = '//whois.toolforge.org'
 
 LOGDIR = '/data/project/whois/logs'
 
