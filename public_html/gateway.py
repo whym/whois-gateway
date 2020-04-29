@@ -267,7 +267,7 @@ th { font-size: smaller; }
 <a href="{site}">Whois Gateway</a>
 <small>(<a href="https://github.com/whym/whois-gateway">source code</a>,
         <a href="https://github.com/whym/whois-gateway#api">API</a>)</small>
-        on <a href="https://tools.wmflabs.org">Tool Labs</a> /
+        on <a href="https://admin.toolforge.org">Toolforge</a> /
 <a href="https://github.com/whym/whois-gateway/issues">Issues?</a>
 </p>
 </div></footer>
