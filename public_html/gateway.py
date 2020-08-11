@@ -26,9 +26,9 @@ PROVIDERS = {
 }
 
 TOOLS = {
-    'GlobalContribs': 'https://tools.wmflabs.org/guc/index.php?user={0}&blocks=true',
+    'GlobalContribs': 'https://guc.toolforge.org/index.php?user={0}&blocks=true',
     'Proxy Checker': 'https://ipcheck.toolforge.org/index.php?ip={0}',
-    'Stalktoy': 'https://tools.wmflabs.org/meta/stalktoy/{0}'
+    'Stalktoy': 'https://meta.toolforge.org/stalktoy/{0}'
 }
 
 TOOL_URL = 'https://whois.toolforge.org/w/{0}/lookup'
