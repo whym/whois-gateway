@@ -79,7 +79,7 @@ def format_table(dct, target):
             ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
         elif isinstance(v, six.string_types):
             if k == 'asn_registry' and v.upper() in PROVIDERS:
-                ret += '<tr><th>%s</th><td><a href="%s"><span class="fa fa-home"></span>%s</a></td></tr>' % (
+                ret += '<tr><th>%s</th><td><a href="%s"><i class="fas fa-home"></i>%s</a></td></tr>' % (
                     k, PROVIDERS[v.upper()].format(target), v.upper()
                 )
             elif k == 'warning':
@@ -179,8 +179,8 @@ th { font-size: smaller; }
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/font-awesome/5.15.0/css/all.min.css">
 <title>Whois Gateway - {subtitle}</title>
 <style type="text/css">
 {css}
@@ -189,22 +189,22 @@ th { font-size: smaller; }
 <body>
 <div class="container">
 <div class="row">
-<div class="col-sm">
+<div class="col-md">
 <header><h1>Whois Gateway</h1></header>
 </div>
 </div>
 
 <div class="row">
-<div class="col-sm-9">
+<div class="col-md-9">
 
 <form action="{site}/gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="form-row form-group {error}">
-<div class="col-sm"><div class="input-group-prepend">
+<div class="col-md"><div class="input-group-prepend">
 <label class="input-group-text" for="ipaddress-input">IP address</label>
 <input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" placeholder="{placeholder}" {af}/>
 </div></div>
-<div class="col-sm-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
+<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
 </div>
 </form>
 '''.format(site=SITE,
@@ -237,7 +237,7 @@ th { font-size: smaller; }
            link=link)
 
     ret += '''</div>
-<div class="col-sm-3">
+<div class="col-md-3">
 '''
     ret += format_link_list(
         'Other tools',
