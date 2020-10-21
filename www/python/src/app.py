@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 # -*- mode: python -*-
 import sys
-sys.path.insert(0, '/data/project/whois/local/lib/python2.7/site-packages')
-
 import six
 from ipwhois import IPWhois, WhoisLookupError
 import cgitb
@@ -277,8 +275,6 @@ th { font-size: smaller; }
     return ret
 
 
-if __name__ == '__main__':
-
-    if os.path.exists(LOGDIR):
-        cgitb.enable(display=0, logdir=LOGDIR)
-    print(format_page(cgi.FieldStorage()))
+def application(env, start_response):
+    start_response('200 OK', [('Content-Type','text/html')])
+    return format_page(cgi.FieldStorage())
