@@ -1,17 +1,16 @@
 #! /usr/bin/env python
 # -*- mode: python -*-
-import sys
+
 import six
 from ipwhois import IPWhois, WhoisLookupError
-import cgitb
-import os
-from six.moves import urllib
-import cgi
 import json
 import socket
 import re
+import flask
+import flask_cors
+from collections import namedtuple
 
-SITE = '//whois.toolforge.org'
+WhoisResult = namedtuple('WhoisResult', ['values', 'error'])
 
 LOGDIR = '/data/project/whois/logs'
 
@@ -28,8 +27,6 @@ TOOLS = {
     'Proxy Checker': 'https://ipcheck.toolforge.org/index.php?ip={0}',
     'Stalktoy': 'https://meta.toolforge.org/stalktoy/{0}'
 }
-
-TOOL_URL = 'https://whois.toolforge.org/w/{0}/lookup'
 
 SUBTITLE = "Find details about an IP address's owner"
 
@@ -60,6 +57,16 @@ def lookup(ip, rdap=False):
         for x in []:
             ret.pop(x, None)
         return ret
+
+
+def lookup2(ip):
+    result = {}
+    error = None
+    try:
+        result = lookup(ip)
+    except Exception as e:
+        error = repr(e)
+    return WhoisResult(result, error)
 
 
 def format_new_lines(s):
@@ -133,12 +140,7 @@ def sanitize_atoz(s):
     return re.sub(r'[^a-zA-Z]', 'X', s)
 
 
-def format_page(form):
-    ip = sanitize_ip(form.getfirst('ip', ''))
-    provider = sanitize_atoz(form.getfirst('provider', '')).upper()
-    fmt = sanitize_atoz(form.getfirst('format', 'html')).lower()
-    do_lookup = form.getfirst('lookup', 'false').lower() != 'false'
-    use_rdap = form.getfirst('rdap', 'false').lower() != 'false'
+def format_page(ip, do_lookup):
     css = '''
 .el { display: flex; flex-direction: row; align-items: baseline; }
 .el-ip { flex: 0?; max-width: 60%; }
@@ -157,23 +159,14 @@ th { font-size: smaller; }
     result = {}
     error = False
     if do_lookup:
-        try:
-            result = lookup(ipn, use_rdap)
-        except Exception as e:
-            result = {'error': repr(e)}
+        res = lookup2(ipn)
+        result = res.values
+        if res.error:
             error = True
     if rest:
         result['warning'] = 'prefixed addresses are not supported; "{}" is ignored'.format(rest)
 
-    if provider in PROVIDERS:
-        return 'Location: {}\n\n'.format(PROVIDERS[provider].format(ip))
-
-    if fmt == 'json':
-        return 'Content-type: text/plain\n\n{}\n'.format(json.dumps(result))
-
-    ret = '''Content-type: text/html
-
-<!DOCTYPE HTML>
+    ret = '''<!DOCTYPE HTML>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -195,7 +188,7 @@ th { font-size: smaller; }
 <div class="row">
 <div class="col-md-9">
 
-<form action="{site}/gateway.py" role="form">
+<form action="{site}gateway.py" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="form-row form-group {error}">
 <div class="col-md"><div class="input-group-prepend">
@@ -205,7 +198,7 @@ th { font-size: smaller; }
 <div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
 </div>
 </form>
-'''.format(site=SITE,
+'''.format(site=flask.request.host_url,
            css=css,
            subtitle=ip if ip != '' else SUBTITLE,
            ip=ip,
@@ -214,7 +207,7 @@ th { font-size: smaller; }
            af='autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
 
     if do_lookup:
-        link = TOOL_URL.format(ip)
+        link = '{0}w/{1}/lookup'.format(flask.request.host_url, ip)
         hostname = None
         try:
             hostname = socket.gethostbyaddr(ipn)[0]
@@ -270,11 +263,43 @@ th { font-size: smaller; }
 </p>
 </div></footer>
 </div>
-</body></html>'''.format(site=SITE)
+</body></html>'''.format(site=flask.request.host_url)
 
     return ret
 
 
-def application(env, start_response):
-    start_response('200 OK', [('Content-Type','text/html')])
-    return format_page(cgi.FieldStorage())
+app = flask.Flask(__name__)
+flask_cors.CORS(app)
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def main_route(path):
+    segments = path.split('/', 3)
+    segments = segments + [''] * (4 - len(segments))
+    p, ip, action, action2 = segments
+    ip = sanitize_ip(ip)
+    fmt = sanitize_atoz(action2)
+
+    if action == 'lookup':
+        if fmt == 'json':
+            res = lookup2(ip)
+            return flask.jsonify(res.values)
+        else:
+            return format_page(ip, True)
+    elif action == 'redirect':
+        return flask.redirect(format(PROVIDERS[action2].format(ip)))
+    else:
+        return format_page(ip, False)
+
+
+@app.route('/gateway.py')
+def legacy_route():
+    ip = sanitize_ip(flask.request.args.get('ip', ''))
+    do_lookup = flask.request.args.get('lookup', 'false').lower() != 'false'
+    fmt = sanitize_atoz(flask.request.args.get('format', 'html')).lower()
+
+    if fmt == 'json':
+        res = lookup2(ip)
+        return flask.jsonify(res.values)
+    else:
+        return format_page(ip, do_lookup)
