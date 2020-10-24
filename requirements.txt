@@ -1,2 +1,4 @@
 ipwhois==0.13.0
 six
+flask
+flask_cors

@@ -52,7 +52,7 @@ def lookup(ip, rdap=False):
         # TODO: RDAP output includes less relevant info, needs a dedicated formatter
         return obj.lookup_rdap()
     else:
-        ret = obj.lookup_whois()
+        ret = obj.lookup_whois(get_recursive=False)
         # remove some fields that clutter
         for x in []:
             ret.pop(x, None)
