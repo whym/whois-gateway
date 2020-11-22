@@ -2,8 +2,7 @@
 # -*- mode: python -*-
 
 import six
-from ipwhois import IPWhois, WhoisLookupError
-import json
+from ipwhois import IPWhois, WhoisLookupError, WhoisRateLimitError
 import socket
 import re
 import flask
@@ -268,8 +267,9 @@ th { font-size: smaller; }
     return ret
 
 
-app = flask.Flask(__name__)
+app = flask.Flask(__name__, )
 flask_cors.CORS(app)
+
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -277,6 +277,9 @@ def main_route(path):
     segments = path.split('/', 3)
     segments = segments + [''] * (4 - len(segments))
     p, ip, action, action2 = segments
+
+    if p != '' and p != 'w' and p != 'whois':
+        flask.abort(404, flask.render_template('notfound.html'))
     ip = sanitize_ip(ip)
     fmt = sanitize_atoz(action2)
 
@@ -303,3 +306,9 @@ def legacy_route():
         return flask.jsonify(res.values)
     else:
         return format_page(ip, do_lookup)
+
+
+@app.route('/robots.txt')
+@app.route('/toolinfo.json')
+def static_from_root():
+    return flask.send_from_directory(app.static_folder, flask.request.path[1:])
