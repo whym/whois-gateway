@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 # -*- mode: python -*-
 
-import six
-from ipwhois import IPWhois, WhoisLookupError, WhoisRateLimitError
 import socket
 import re
+from collections import namedtuple
+import six
 import flask
 import flask_cors
-from collections import namedtuple
+from ipwhois import IPWhois, WhoisLookupError
 
 WhoisResult = namedtuple('WhoisResult', ['values', 'error'])
 
@@ -30,7 +30,7 @@ TOOLS = {
 SUBTITLE = "Find details about an IP address's owner"
 
 
-def order_keys(x):
+def ord_key(x):
     keys = dict((y, x) for (x, y) in enumerate([
         'warning', 'asn_registry', 'asn_country_code', 'asn_cidr', 'query',
         'nets', 'asn', 'asn_date',
@@ -40,9 +40,8 @@ def order_keys(x):
         'ip_version', 'start_address', 'end_address',
         'abuse_emails', 'tech_emails', 'misc_emails']))
     if x in keys:
-        return '0_%04d' % keys[x]
-    else:
-        return '1_%s' % x
+        return '00_%04d' % keys[x]
+    return '99_%s' % x
 
 
 def lookup(ip, rdap=False):
@@ -78,7 +77,7 @@ def format_table(dct, target):
     if isinstance(dct, list):
         return '\n'.join(format_table(x, target) for x in dct)
     ret = '<table class="table table-sm"><tbody>'
-    for (k, v) in sorted(dct.items(), key=lambda x: order_keys(x[0])):
+    for (k, v) in sorted(dct.items(), key=lambda x: ord_key(x[0])):
         if v is None or len(v) == 0 or v == 'NA' or v == 'None':
             ret += '<tr class="text-muted"><th>%s</th><td>%s</td></tr>' % (k, v)
         elif isinstance(v, six.string_types):
@@ -131,12 +130,16 @@ def split_prefixed_ip_address(ip):
         return (ip, None)
 
 
-def sanitize_ip(s):
-    return re.sub(r'[^0-9a-fA-F\.\:/]', 'X', s)
+def sanitize_ip(string):
+    return re.sub(r'[^0-9a-fA-F\.\:/]', ' ', string)
 
 
-def sanitize_atoz(s):
-    return re.sub(r'[^a-zA-Z]', 'X', s)
+def sanitize_atoz(string):
+    return re.sub(r'[^a-zA-Z]', ' ', string)
+
+
+def is_ip_like_string(string):
+    return re.match(r'([0-9A-Fa-f\:\.]|%3[aA])+', string) is not None
 
 
 def format_page(ip, do_lookup):
@@ -151,13 +154,16 @@ th { font-size: smaller; }
     # remove spaces, the zero-width space and left-to-right mark
     if six.PY2:
         ip = ip.decode('utf-8')
-    ip = ip.strip(u' \u200b\u200e')
+    ip = ip.strip(u' \u200b\u200c\u200d\u200e\u200f')
 
     (ipn, rest) = split_prefixed_ip_address(ip)
 
     result = {}
     error = False
-    if do_lookup:
+    app.logger.info('ip=' + ip)
+    if len(ip) > 0 and not is_ip_like_string(ip):
+        error = True
+    elif do_lookup:
         res = lookup2(ipn)
         result = res.values
         if res.error:
@@ -264,7 +270,8 @@ th { font-size: smaller; }
 </div>
 </body></html>'''.format(site=flask.request.host_url)
 
-    return ret
+    status = 400 if error else 200
+    return ret, status
 
 
 app = flask.Flask(__name__, )
@@ -277,6 +284,7 @@ def main_route(path):
     segments = path.split('/', 3)
     segments = segments + [''] * (4 - len(segments))
     p, ip, action, action2 = segments
+    app.logger.info(segments)
 
     if p != '' and p != 'w' and p != 'whois':
         flask.abort(404, flask.render_template('notfound.html'))
@@ -300,7 +308,6 @@ def legacy_route():
     ip = sanitize_ip(flask.request.args.get('ip', ''))
     do_lookup = flask.request.args.get('lookup', 'false').lower() != 'false'
     fmt = sanitize_atoz(flask.request.args.get('format', 'html')).lower()
-
     if fmt == 'json':
         res = lookup2(ip)
         return flask.jsonify(res.values)
@@ -312,3 +319,8 @@ def legacy_route():
 @app.route('/toolinfo.json')
 def static_from_root():
     return flask.send_from_directory(app.static_folder, flask.request.path[1:])
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    print('For more flexible debugging try this instead: "env FLASK_DEBUG=1 FLASK_APP={} flask run --port=5001"'.format(__file__))
