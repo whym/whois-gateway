@@ -194,6 +194,10 @@ th { font-size: smaller; }
 </div>
 </div>
 
+  <div class="alert alert-warning" role="alert">
+		This tool is <a class="alert-link" href="https://github.com/whym/whois-gateway/issues/21">experiencing a problem</a> &mdash; <a class="alert-link" href="https://whois-dev.toolforge.org/">a new beta version</a> is available for testing.
+  </div>
+
 <div class="row">
 <div class="col-md-9">
 
