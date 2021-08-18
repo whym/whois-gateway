@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/5.0.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<title>Whois Gateway - {{subtitle}}</title>
+<style>
+.el { display: flex; flex-direction: row; align-items: baseline; }
+.el-ip { max-width: 60%; }
+.el-prov { flex: 1 8em; }
+th { font-size: smaller; }
+.link-result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="row">
+<div class="col-md">
+<header><h1>Whois Gateway</h1></header>
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-9">
+
+<form action="{{site}}gateway.py" role="form">
+<input type="hidden" name="lookup" value="true"/>
+<div class="row g-2">
+<div class="col-md"><div class="input-group {{error}}">
+<label class="input-group-text" for="ipaddress-input">IP address</label>
+<input type="text" name="ip" value="{{ip}}" id="ipaddress-input" class="form-control" placeholder="{{placeholder}}" {{auto_focus}}/>
+</div></div>
+<div class="col-md-2 d-grid"><input type="submit" value="Lookup" class="btn btn-secondary"/></div>
+</div>
+</form>
+
+{% if do_lookup %}
+<div class="card mt-3 mb-3"><div class="card-header">{% if hostname is not none %}
+	<strong>{{hostname}}</strong>
+{% else %}
+  <em>(No corresponding host name retrieved)</em>
+{% endif %}</div>
+<div class="card-body">{{table|safe}}</div></div>
+
+<div class="row mb-3">
+<div class="col-12"><div class="input-group">
+<label class="input-group-text"><a href="{{link}}"><i class="fas fa-link"></i></a>Link this result</label>
+<output class="form-control link-result">{{link}}</output>
+</div></div>
+</div>
+{% endif %}
+</div>
+
+<div class="col-md-3">
+{{link_list|safe}}
+</div>
+</div>
+
+<footer><div class="container">
+<hr>
+<p class="text-center text-muted">
+<a href="{{site}}">Whois Gateway</a>
+<small>(<a href="https://github.com/whym/whois-gateway">source code</a>,
+        <a href="https://github.com/whym/whois-gateway#api">API</a>)</small>
+        on <a href="https://admin.toolforge.org">Toolforge</a> /
+<a href="https://github.com/whym/whois-gateway/issues">Issues?</a>
+</p>
+</div></footer>
+</div>
+</body></html>

@@ -142,13 +142,18 @@ def is_ip_like_string(string):
     return re.match(r'([0-9A-Fa-f\:\.]|%3[aA])+', string) is not None
 
 
-def format_page(ip, do_lookup):
+def get_hostname(ip):
+    hostname = None
+    try:
+        hostname = socket.gethostbyaddr(ip)[0]
+    except IOError:
+        pass
+
+    return hostname
+
+
+def render_result(ip, do_lookup):
     css = '''
-.el { display: flex; flex-direction: row; align-items: baseline; }
-.el-ip { flex: 0?; max-width: 60%; }
-.el-prov { flex: 1 8em; }
-th { font-size: smaller; }
-.link-result { -moz-user-select: all; -webkit-user-select: all; -ms-user-select: all; user-select: all; }
 '''.strip()
 
     # remove spaces, the zero-width space and left-to-right mark
@@ -162,80 +167,19 @@ th { font-size: smaller; }
     error = False
     app.logger.info('ip=' + ip)
     if len(ip) > 0 and not is_ip_like_string(ip):
+        app.logger.warning('is not IP-like')
         error = True
     elif do_lookup:
         res = lookup2(ipn)
         result = res.values
         if res.error:
+            app.logger.warning('error: {}'.format(res.error))
             error = True
     if rest:
         result['warning'] = 'prefixed addresses are not supported; "{}" is ignored'.format(rest)
 
-    ret = '''<!DOCTYPE HTML>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/font-awesome/5.15.0/css/all.min.css">
-<title>Whois Gateway - {subtitle}</title>
-<style type="text/css">
-{css}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="row">
-<div class="col-md">
-<header><h1>Whois Gateway</h1></header>
-</div>
-</div>
 
-<div class="row">
-<div class="col-md-9">
-
-<form action="{site}gateway.py" role="form">
-<input type="hidden" name="lookup" value="true"/>
-<div class="form-row form-group {error}">
-<div class="col-md"><div class="input-group-prepend">
-<label class="input-group-text" for="ipaddress-input">IP address</label>
-<input type="text" name="ip" value="{ip}" id="ipaddress-input" class="form-control" placeholder="{placeholder}" {af}/>
-</div></div>
-<div class="col-md-2"><input type="submit" value="Lookup" class="btn btn-secondary btn-block"/></div>
-</div>
-</form>
-'''.format(site=flask.request.host_url,
-           css=css,
-           subtitle=ip if ip != '' else SUBTITLE,
-           ip=ip,
-           placeholder='e.g. ' + socket.gethostbyname(socket.gethostname()),
-           error='has-danger' if error else '',
-           af='autofocus onFocus="this.select();"' if (not do_lookup or error) else '')
-
-    if do_lookup:
-        link = '{0}w/{1}/lookup'.format(flask.request.host_url, ip)
-        hostname = None
-        try:
-            hostname = socket.gethostbyaddr(ipn)[0]
-        except IOError:
-            pass
-        ret += '''
-<div class="card mb-3"><div class="card-header">{hostname}</div>
-<div class="card-body">{table}</div></div>
-
-<div class="form-row form-group">
-<div class="col-12"><div class="input-group-prepend">
-<label class="input-group-text"><a href="{link}">Link this result</a></label>
-<output class="form-control link-result">{link}</output>
-</div></div>
-</div>
-'''.format(hostname='<strong>%s</strong>' % hostname if hostname else '<em>(No corresponding host name retrieved)</em>',
-           table=format_table(result, ip),
-           link=link)
-
-    ret += '''</div>
-<div class="col-md-3">
-'''
-    ret += format_link_list(
+    link_list = format_link_list(
         'Other tools',
         [(fmt.format(ip),
           'Look up %s at %s' % (ip, name),
@@ -244,7 +188,7 @@ th { font-size: smaller; }
          for (name, fmt) in sorted(TOOLS.items())]
     )
 
-    ret += format_link_list(
+    link_list += format_link_list(
         'Sources',
         [(fmt.format(ip),
           'Look up %s at %s' % (ip, name),
@@ -253,25 +197,23 @@ th { font-size: smaller; }
          for (name, fmt) in sorted(PROVIDERS.items())]
     )
 
-    ret += '''
-</div>
-</div>
-
-<footer><div class="container">
-<hr>
-<p class="text-center text-muted">
-<a href="{site}">Whois Gateway</a>
-<small>(<a href="https://github.com/whym/whois-gateway">source code</a>,
-        <a href="https://github.com/whym/whois-gateway#api">API</a>)</small>
-        on <a href="https://admin.toolforge.org">Toolforge</a> /
-<a href="https://github.com/whym/whois-gateway/issues">Issues?</a>
-</p>
-</div></footer>
-</div>
-</body></html>'''.format(site=flask.request.host_url)
+    render = flask.render_template(
+        'main.html',
+        site=flask.request.host_url,
+        subtitle=ip if ip != '' else SUBTITLE,
+        ip=ip,
+        placeholder='e.g. ' + socket.gethostbyname(socket.gethostname()),
+        error='has-danger' if error else '',
+        auto_focus='autofocus onFocus="this.select();"' if (not do_lookup or error) else '',
+        do_lookup=do_lookup,
+        link='{0}w/{1}/lookup'.format(flask.request.host_url, ip),
+        hostname=get_hostname(ipn),
+        table=format_table(result, ip),
+        link_list=link_list
+    )
 
     status = 400 if error else 200
-    return ret, status
+    return render, status
 
 
 app = flask.Flask(__name__, )
@@ -296,11 +238,11 @@ def main_route(path):
             res = lookup2(ip)
             return flask.jsonify(res.values)
         else:
-            return format_page(ip, True)
+            return render_result(ip, True)
     elif action == 'redirect':
         return flask.redirect(format(PROVIDERS[action2].format(ip)))
     else:
-        return format_page(ip, False)
+        return render_result(ip, False)
 
 
 @app.route('/gateway.py')
@@ -312,7 +254,7 @@ def legacy_route():
         res = lookup2(ip)
         return flask.jsonify(res.values)
     else:
-        return format_page(ip, do_lookup)
+        return render_result(ip, do_lookup)
 
 
 @app.route('/robots.txt')
