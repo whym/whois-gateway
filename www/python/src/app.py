@@ -139,23 +139,23 @@ def sanitize_atoz(string):
 
 
 def is_ip_like_string(string):
-    return re.match(r'([0-9A-Fa-f\:\.]|%3[aA])+', string) is not None
+    return re.match(r'[0-9:]', string) is not None and re.match(r'^([0-9A-Fa-f\:\.]|%3[aA])+$', string) is not None
 
 
 def get_hostname(ip):
     hostname = None
-    try:
-        hostname = socket.gethostbyaddr(ip)[0]
-    except IOError:
-        pass
+    if ip is not None:
+        try:
+            hostname = socket.gethostbyaddr(ip)[0]
+        except IOError:
+            pass
+        except UnicodeError:
+            pass
 
     return hostname
 
 
 def render_result(ip, do_lookup):
-    css = '''
-'''.strip()
-
     # remove spaces, the zero-width space and left-to-right mark
     if six.PY2:
         ip = ip.decode('utf-8')
@@ -165,9 +165,9 @@ def render_result(ip, do_lookup):
 
     result = {}
     error = False
-    app.logger.info('ip=' + ip)
+    app.logger.info('ipn="{}", ip="{}"'.format(ipn, ip))
     if len(ip) > 0 and not is_ip_like_string(ip):
-        app.logger.warning('is not IP-like')
+        app.logger.warning('"{}" is not IP-like'.format(ipn))
         error = True
     elif do_lookup:
         res = lookup2(ipn)
@@ -177,7 +177,6 @@ def render_result(ip, do_lookup):
             error = True
     if rest:
         result['warning'] = 'prefixed addresses are not supported; "{}" is ignored'.format(rest)
-
 
     link_list = format_link_list(
         'Other tools',
@@ -220,16 +219,12 @@ app = flask.Flask(__name__, )
 flask_cors.CORS(app)
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def main_route(path):
-    segments = path.split('/', 3)
-    segments = segments + [''] * (4 - len(segments))
-    p, ip, action, action2 = segments
-    app.logger.info(segments)
-
-    if p != '' and p != 'w' and p != 'whois':
-        flask.abort(404, flask.render_template('notfound.html'))
+@app.route('/w/', defaults={'ip': '', 'action': '', 'action2': ''})
+@app.route('/w/<ip>', defaults={'action': '', 'action2': ''})
+@app.route('/w/<ip>/<action>', defaults={'action2': ''})
+@app.route('/w/<ip>/<action>/<action2>', )
+def main_route(ip, action, action2):
+    app.logger.info('main_route: {}'.format([ip, action, action2]))
     ip = sanitize_ip(ip)
     fmt = sanitize_atoz(action2)
 
@@ -240,21 +235,45 @@ def main_route(path):
         else:
             return render_result(ip, True)
     elif action == 'redirect':
-        return flask.redirect(format(PROVIDERS[action2].format(ip)))
+        return flask.redirect(PROVIDERS[action2].format(ip))
     else:
         return render_result(ip, False)
 
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all_route(path):
+    app.logger.info('catch_all_route')
+    segments = path.split('/', 3)
+    segments = segments + [''] * (4 - len(segments))
+    p, ip, action, action2 = segments
+    app.logger.info(segments)
+
+    if p != '' and p != 'w' and p != 'whois':
+        return flask.render_template('notfound.html'), 404
+
+    return flask.redirect(flask.url_for('main_route', ip=ip, action=action, action2=action2))
+
+
 @app.route('/gateway.py')
 def legacy_route():
+    app.logger.info('legacy_route')
     ip = sanitize_ip(flask.request.args.get('ip', ''))
     do_lookup = flask.request.args.get('lookup', 'false').lower() != 'false'
     fmt = sanitize_atoz(flask.request.args.get('format', 'html')).lower()
+    provider = sanitize_atoz(flask.request.args.get('provider', '')).upper()
+
+    action = ''
+    action2 = ''
+    if do_lookup:
+        action = 'lookup'
     if fmt == 'json':
-        res = lookup2(ip)
-        return flask.jsonify(res.values)
-    else:
-        return render_result(ip, do_lookup)
+        action2 = 'json'
+    if provider != '':
+        action = 'redirect'
+        action2 = provider
+
+    return flask.redirect(flask.url_for('main_route', ip=ip, action=action, action2=action2))
 
 
 @app.route('/robots.txt')

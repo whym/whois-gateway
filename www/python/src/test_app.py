@@ -1,7 +1,11 @@
 import os
 import tempfile
 import pytest
-from app import app
+from app import app, is_ip_like_string
+
+
+def fake_lookup(ip, rdap=False):
+    return {}
 
 
 @pytest.fixture(name='client')
@@ -35,39 +39,51 @@ def test_respond_to_entry_path_ipv4(client):
     """200 for simple paths"""
 
     assert client.get('/w/8.8.8.8').status_code == 200
-    assert client.get('/').status_code == 200
-    assert client.get('/whois/8.8.8.8').status_code == 200
-    assert client.get('/gateway.py?').status_code == 200
+    assert client.get('/', follow_redirects=True).status_code == 200
+    assert client.get('/whois/8.8.8.8',
+                      follow_redirects=True).status_code == 200
+
+
+def test_respond_to_static_path(client):
+    """200 for static paths"""
+
     assert client.get('/robots.txt').status_code == 200
+    assert client.get('/toolinfo.json').status_code == 200
 
 
 def test_respond_to_standard_path_ipv6(client):
     """200 for simple paths (IPv6)."""
 
     assert client.get('/w/2606:4700:4700::1111').status_code == 200
-    assert client.get('/w/1%3A%3A1/').status_code == 200
+    assert client.get('/w/:::').status_code == 200
+    assert client.get('/w/:::1/', follow_redirects=True).status_code == 200
+    assert client.get('/w/1%3A%3A1').status_code == 200
 
 
-def test_respond_to_rest_queries(client):
+def test_respond_to_rest_queries(client, mocker):
     """200 for REST queries."""
 
+    m = mocker.patch('app.lookup', autospec=True)
     assert client.get('/w/2606:4700:4700::1111/lookup').status_code == 200
-    assert client.get('/w/2606:4700:4700::1111/lookup/json').status_code == 200
+    m.assert_called_once_with('2606:4700:4700::1111')
     assert client.get('/w/8.8.8.8/lookup').status_code == 200
     assert client.get('/w/8.8.8.8/redirect/APNIC').status_code == 302
+    mocker.patch('app.lookup', fake_lookup)
+    assert client.get('/w/2606:4700:4700::1111/lookup/json').status_code == 200
 
 
 def test_respond_to_legacy_queries(client):
     """200 for legacy queries."""
 
-    assert client.get('/gateway.py?ip=8.8.8.8&lookup=true').status_code == 200
+    assert client.get('/gateway.py?ip=8.8.8.8&lookup=true').headers['location'].endswith('8.8.8.8/lookup')
+    assert client.get('/gateway.py?ip=::1&lookup=true&format=json').headers['location'].endswith('::1/lookup/json')
+    assert client.get('/gateway.py?ip=8.8.8.8&provider=APNIC').headers['location'].endswith('8.8.8.8/redirect/APNIC')
 
 
-def test_error_for_attack(client):
+def test_error_for_abuse(client):
     """400 for paths that obviously do not ask about IPs"""
 
-    assert client.get('/w/../../').status_code == 400
-    assert client.get('/w/ "| ls / "').status_code == 400
+    assert client.get('/w/../../admin').status_code == 400
 
 
 def test_tolerance_to_whitespace(client):
@@ -75,7 +91,12 @@ def test_tolerance_to_whitespace(client):
 
     assert client.get('/w/%208.8.8.8').status_code == 200
     assert client.get('/w/8.8.8. ').status_code == 200
-    assert client.get('/w/ 8.8.8.8/').status_code == 200
+    assert client.get('/w/ 8.8.8.8').status_code == 200
+
+
+def test_ip_like_string():
+    assert is_ip_like_string('1.1.1.1')
+    assert not is_ip_like_string('1.1.1.X')
 
 
 if __name__ == '__main__':
