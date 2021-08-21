@@ -198,14 +198,12 @@ def render_result(ip, do_lookup):
 
     render = flask.render_template(
         'main.html',
-        site=flask.request.host_url,
         subtitle=ip if ip != '' else SUBTITLE,
         ip=ip,
         placeholder='e.g. ' + socket.gethostbyname(socket.gethostname()),
         error='has-danger' if error else '',
         auto_focus='autofocus onFocus="this.select();"' if (not do_lookup or error) else '',
         do_lookup=do_lookup,
-        link='{0}w/{1}/lookup'.format(flask.request.host_url, ip),
         hostname=get_hostname(ipn),
         table=format_table(result, ip),
         link_list=link_list
@@ -249,7 +247,7 @@ def catch_all_route(path):
     p, ip, action, action2 = segments
     app.logger.info(segments)
 
-    if p != '' and p != 'w' and p != 'whois':
+    if p not in ('', 'w', 'whois'):
         return flask.render_template('notfound.html'), 404
 
     return flask.redirect(flask.url_for('main_route', ip=ip, action=action, action2=action2))

@@ -24,7 +24,7 @@ th { font-size: smaller; }
 <div class="row">
 <div class="col-md-9">
 
-<form action="{{site}}gateway.py" role="form">
+<form action="{{url_for('legacy_route')}}" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row g-2">
 <div class="col-md"><div class="input-group {{error}}">
@@ -42,25 +42,30 @@ th { font-size: smaller; }
   <em>(No corresponding host name retrieved)</em>
 {% endif %}</div>
 <div class="card-body">{{table|safe}}</div></div>
-
-<div class="row mb-3">
-<div class="col-12"><div class="input-group">
-<label class="input-group-text"><a href="{{link}}"><i class="fas fa-link"></i></a>Link this result</label>
-<output class="form-control link-result">{{link}}</output>
-</div></div>
-</div>
 {% endif %}
+
 </div>
 
-<div class="col-md-3">
+<div class="col-md-3 mb-3">
 {{link_list|safe}}
 </div>
+
+{% if do_lookup %}
+<div class="col-md-9">
+<div class="row">
+<div class="col-12"><div class="input-group">
+<label class="input-group-text"><a href="{{url_for('main_route', ip=ip, action='lookup')}}"><i class="fas fa-link"></i></a>Link this result</label>
+<output class="form-control link-result">{{url_for('main_route', ip=ip, action='lookup', _external=True)}}</output>
+</div></div>
+</div>
+</div>
+{% endif %}
 </div>
 
 <footer><div class="container">
 <hr>
 <p class="text-center text-muted">
-<a href="{{site}}">Whois Gateway</a>
+<a href="{{request.host_url}}">Whois Gateway</a>
 <small>(<a href="https://github.com/whym/whois-gateway">source code</a>,
         <a href="https://github.com/whym/whois-gateway#api">API</a>)</small>
         on <a href="https://admin.toolforge.org">Toolforge</a> /
