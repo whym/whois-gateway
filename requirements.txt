@@ -1,4 +1,5 @@
-ipwhois==0.13.0
+#ipwhois==0.13.0
+-e git+https://github.com/wiki-ST47/ipwhois.git@fae007310c5c73ac48e827de555bfce9d9c418ea#egg=ipwhois
 six
 flask
 flask_cors
