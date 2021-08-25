@@ -7,6 +7,7 @@ from collections import namedtuple
 import six
 import flask
 import flask_cors
+from flask_limiter import Limiter
 from ipwhois import IPWhois, WhoisLookupError
 
 WhoisResult = namedtuple('WhoisResult', ['values', 'error'])
@@ -215,6 +216,11 @@ def render_result(ip, do_lookup):
 
 app = flask.Flask(__name__, )
 flask_cors.CORS(app)
+limiter = Limiter(
+    app,
+    key_func=lambda: flask.request.user_agent.string,
+    default_limits=["5000 per day", "20 per minute"]
+)
 
 
 @app.route('/w/', defaults={'ip': '', 'action': '', 'action2': ''})
@@ -223,6 +229,8 @@ flask_cors.CORS(app)
 @app.route('/w/<ip>/<action>/<action2>', )
 def main_route(ip, action, action2):
     app.logger.info('main_route: {}'.format([ip, action, action2]))
+    app.logger.info('user_agent="{}"'.format(flask.request.user_agent))
+    app.logger.info('referrer="{}"'.format(flask.request.referrer))
     ip = sanitize_ip(ip)
     fmt = sanitize_atoz(action2)
 
@@ -282,4 +290,5 @@ def static_from_root():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-    print('For more flexible debugging try this instead: "env FLASK_DEBUG=1 FLASK_APP={} flask run --port=5001"'.format(__file__))
+    print('''For more flexible debugging try this instead:
+    env FLASK_DEBUG=1 FLASK_APP={} flask run --port=5001'''.format(__file__))

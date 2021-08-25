@@ -1,7 +1,7 @@
 import os
 import tempfile
 import pytest
-from app import app, is_ip_like_string
+from app import app, limiter, is_ip_like_string
 
 
 def fake_lookup(ip, rdap=False):
@@ -12,6 +12,7 @@ def fake_lookup(ip, rdap=False):
 def fixture_client():
     db_fd, app.config['DATABASE'] = tempfile.mkstemp()
     app.config['TESTING'] = True
+    app.debug = True
 
     with app.test_client() as client:
         with app.app_context():
@@ -20,6 +21,7 @@ def fixture_client():
 
     os.close(db_fd)
     os.unlink(app.config['DATABASE'])
+    limiter.enabled = False
 
 
 def test_error_for_non_existent_path(client):
@@ -75,15 +77,33 @@ def test_respond_to_rest_queries(client, mocker):
 def test_respond_to_legacy_queries(client):
     """200 for legacy queries."""
 
-    assert client.get('/gateway.py?ip=8.8.8.8&lookup=true').headers['location'].endswith('8.8.8.8/lookup')
-    assert client.get('/gateway.py?ip=::1&lookup=true&format=json').headers['location'].endswith('::1/lookup/json')
-    assert client.get('/gateway.py?ip=8.8.8.8&provider=APNIC').headers['location'].endswith('8.8.8.8/redirect/APNIC')
+    with client.get('/gateway.py?ip=8.8.8.8&lookup=true') as res:
+        assert res.headers['location'].endswith('8.8.8.8/lookup')
+    with client.get('/gateway.py?ip=::1&lookup=true&format=json') as res:
+        assert res.headers['location'].endswith('::1/lookup/json')
+    with client.get('/gateway.py?ip=8.8.8.8&provider=APNIC') as res:
+        assert res.headers['location'].endswith('8.8.8.8/redirect/APNIC')
 
 
 def test_error_for_abuse(client):
     """400 for paths that obviously do not ask about IPs"""
 
     assert client.get('/w/../../admin').status_code == 400
+
+
+def test_error_for_too_many_requests(client):
+    """429 for too many requests"""
+
+    limiter.enabled = True
+    try:
+        for i in range(0, 20):
+            assert client.get('/w/1.1.1.{}'.format(i)).status_code == 200
+        assert client.get('/w/9.9.9.9').status_code == 429
+        client.user_agent = 'test'
+        env = {'HTTP_USER_AGENT': 'Chrome'}
+        assert client.get('/w/9.9.9.9', environ_base=env).status_code == 200
+    finally:
+        limiter.enabled = False
 
 
 def test_tolerance_to_whitespace(client):
