@@ -13,7 +13,8 @@ Web-based whois gateway written in Python for lighttpd
 * <code>/w/202.12.29.175/redirect/NAME</code> or <code>/gateway.py?ip=202.12.29.175&provider=NAME</code>
   * Redirect to a search result page provided by NAME
 
-Requests are rate-limited. Your requests should not be more than 20 times per minute. Beyond that, the tool will give you ``429 Too Many Requests``.
+There should be no more than 60 requests per minute from one host to the tool.
+Beyond the limit, the tool will give you ``429 Too Many Requests`` and no result.
 
 ## License
 

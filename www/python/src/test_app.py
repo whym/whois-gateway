@@ -1,6 +1,7 @@
 import os
 import tempfile
 import pytest
+import time
 from app import app, limiter, is_ip_like_string
 
 
@@ -8,10 +9,17 @@ def fake_lookup(ip, rdap=False):
     return {}
 
 
+def slow_lookup(ip, rdap=False):
+    for x in range(0, 20):
+        time.sleep(0.5)
+    return {}
+
+
 @pytest.fixture(name='client')
 def fixture_client():
     db_fd, app.config['DATABASE'] = tempfile.mkstemp()
     app.config['TESTING'] = True
+    app.config['timeout'] = 2.5
     app.debug = True
 
     with app.test_client() as client:
@@ -96,7 +104,7 @@ def test_error_for_too_many_requests(client):
 
     limiter.enabled = True
     try:
-        for i in range(0, 20):
+        for i in range(0, 60):
             assert client.get('/w/1.1.1.{}'.format(i)).status_code == 200
         assert client.get('/w/9.9.9.9').status_code == 429
         client.user_agent = 'test'
@@ -104,6 +112,14 @@ def test_error_for_too_many_requests(client):
         assert client.get('/w/9.9.9.9', environ_base=env).status_code == 200
     finally:
         limiter.enabled = False
+
+
+def test_error_for_slow_lookup(client, mocker):
+    """408 for slow response"""
+
+    mocker.patch('app.lookup', slow_lookup)
+    with client.get('/w/8.8.8.8/lookup/json') as res:
+        assert res.status_code == 408
 
 
 def test_tolerance_to_whitespace(client):
@@ -115,6 +131,7 @@ def test_tolerance_to_whitespace(client):
 
 
 def test_ip_like_string():
+    """Detect strings obviously different from valid IPs"""
     assert is_ip_like_string('1.1.1.1')
     assert not is_ip_like_string('1.1.1.X')
 

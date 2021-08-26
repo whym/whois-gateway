@@ -9,6 +9,7 @@ import flask
 import flask_cors
 from flask_limiter import Limiter
 from ipwhois import IPWhois, WhoisLookupError
+import stopit
 
 WhoisResult = namedtuple('WhoisResult', ['values', 'error'])
 
@@ -52,19 +53,20 @@ def lookup(ip, rdap=False):
         return obj.lookup_rdap()
     else:
         ret = obj.lookup_whois(get_recursive=False)
-        # remove some fields that clutter
-        for x in []:
-            ret.pop(x, None)
         return ret
 
 
+@stopit.threading_timeoutable()
 def lookup2(ip):
     result = {}
     error = None
     try:
-        result = lookup(ip)
+        result2 = lookup(ip)
+        if result2 is not None:
+            result.update(result2)
     except Exception as e:
-        error = repr(e)
+        app.logger.error(repr(e))
+        error = e
     return WhoisResult(result, error)
 
 
@@ -171,7 +173,7 @@ def render_result(ip, do_lookup):
         app.logger.warning('"{}" is not IP-like'.format(ipn))
         error = True
     elif do_lookup:
-        res = lookup2(ipn)
+        res = lookup2(ipn, timeout=app.config['timeout'])
         result = res.values
         if res.error:
             app.logger.warning('error: {}'.format(res.error))
@@ -210,7 +212,12 @@ def render_result(ip, do_lookup):
         link_list=link_list
     )
 
-    status = 400 if error else 200
+    status = 200
+    if error and isinstance(error, stopit.TimeoutException):
+        status = 408
+    elif error:
+        status = 400
+
     return render, status
 
 
@@ -219,8 +226,9 @@ flask_cors.CORS(app)
 limiter = Limiter(
     app,
     key_func=lambda: flask.request.user_agent.string,
-    default_limits=["5000 per day", "20 per minute"]
+    default_limits=["10000 per day", "60 per minute"]
 )
+app.config['timeout'] = 20
 
 
 @app.route('/w/', defaults={'ip': '', 'action': '', 'action2': ''})
@@ -236,8 +244,11 @@ def main_route(ip, action, action2):
 
     if action == 'lookup':
         if fmt == 'json':
-            res = lookup2(ip)
-            return flask.jsonify(res.values)
+            res = lookup2(ip, timeout=app.config['timeout'])
+            if res.error is None:
+                return flask.jsonify(res.values)
+            elif isinstance(res.error, stopit.TimeoutException):
+                return flask.jsonify({'error': 'timeout'}), 408
         else:
             return render_result(ip, True)
     elif action == 'redirect':
