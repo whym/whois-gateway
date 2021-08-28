@@ -27,9 +27,9 @@ th { font-size: smaller; }
 <form action="{{url_for('legacy_route')}}" role="form">
 <input type="hidden" name="lookup" value="true"/>
 <div class="row g-2">
-<div class="col-md"><div class="input-group {{error}}">
+<div class="col-md"><div class="input-group">
 <label class="input-group-text" for="ipaddress-input">IP address</label>
-<input type="text" name="ip" value="{{ip}}" id="ipaddress-input" class="form-control" placeholder="{{placeholder}}" {{auto_focus}}/>
+<input type="text" name="ip" value="{{ip}}" id="ipaddress-input" class="form-control{% if error_present %} is-invalid{% endif %}" placeholder="{{placeholder}}" {% if not do_lookup or error_present %} autofocus onFocus="this.select();" {% endif %}/>
 </div></div>
 <div class="col-md-2 d-grid"><input type="submit" value="Lookup" class="btn btn-secondary"/></div>
 </div>

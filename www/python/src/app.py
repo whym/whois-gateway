@@ -66,6 +66,7 @@ def lookup2(ip):
             result.update(result2)
     except Exception as e:
         app.logger.error(repr(e))
+        result['error'] = repr(e)
         error = e
     return WhoisResult(result, error)
 
@@ -167,17 +168,22 @@ def render_result(ip, do_lookup):
     (ipn, rest) = split_prefixed_ip_address(ip)
 
     result = {}
-    error = False
+    status = 200
     app.logger.info('ipn="{}", ip="{}"'.format(ipn, ip))
     if len(ip) > 0 and not is_ip_like_string(ip):
         app.logger.warning('"{}" is not IP-like'.format(ipn))
-        error = True
+        result['error'] = '"{}" does not look like an IP address'.format(ipn)
+        status = 400
     elif do_lookup:
         res = lookup2(ipn, timeout=app.config['timeout'])
         result = res.values
         if res.error:
             app.logger.warning('error: {}'.format(res.error))
-            error = True
+            if isinstance(res.error, stopit.TimeoutException):
+                status = 408
+            else:
+                status = 502
+
     if rest:
         result['warning'] = 'prefixed addresses are not supported; "{}" is ignored'.format(rest)
 
@@ -204,19 +210,12 @@ def render_result(ip, do_lookup):
         subtitle=ip if ip != '' else SUBTITLE,
         ip=ip,
         placeholder='e.g. ' + socket.gethostbyname(socket.gethostname()),
-        error='has-danger' if error else '',
-        auto_focus='autofocus onFocus="this.select();"' if (not do_lookup or error) else '',
+        error_present=(status != 200),
         do_lookup=do_lookup,
         hostname=get_hostname(ipn),
         table=format_table(result, ip),
         link_list=link_list
     )
-
-    status = 200
-    if error and isinstance(error, stopit.TimeoutException):
-        status = 408
-    elif error:
-        status = 400
 
     return render, status
 

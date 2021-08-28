@@ -43,6 +43,7 @@ def test_error_for_invalid_ip(client):
     """400 for invalid IP addresses."""
 
     assert client.get('/w/x.x.x.x').status_code == 400
+    assert b'does not look like an IP address' in client.get('/w/x.x.x.x/lookup').data
 
 
 def test_respond_to_entry_path_ipv4(client):
@@ -114,12 +115,16 @@ def test_error_for_too_many_requests(client):
         limiter.enabled = False
 
 
-def test_error_for_slow_lookup(client, mocker):
+def test_timeout_for_slow_lookup(client, mocker):
     """408 for slow response"""
 
     mocker.patch('app.lookup', slow_lookup)
     with client.get('/w/8.8.8.8/lookup/json') as res:
         assert res.status_code == 408
+        assert b'timeout' in res.data
+    with client.get('/w/8.8.8.8/lookup') as res:
+        assert res.status_code == 408
+        assert b'Timeout' in res.data
 
 
 def test_tolerance_to_whitespace(client):
