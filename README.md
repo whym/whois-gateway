@@ -16,6 +16,18 @@ Web-based whois gateway written in Python for lighttpd
 There should be no more than 60 requests per minute from one host to the tool.
 Beyond the limit, the tool will give you ``429 Too Many Requests`` and no result.
 
+## Configuration
+
+To change the rate-limiter storage, write into ``config.yaml``:
+
+``RATELIMIT_STORAGE_URL: "redis://tools-redis/0"``
+
+or to change the log level:
+
+``log_level: "DEBUG"``
+
+Note that to enable redis, you need to do ``pip install redis``.
+
 ## License
 
 See [LICENSE.md](https://github.com/whym/whois-gateway/blob/master/LICENSE.md).

@@ -2,12 +2,15 @@
 # -*- mode: python -*-
 
 import socket
+import yaml
+import os
 import re
 from collections import namedtuple
 import six
 import flask
 import flask_cors
 from flask_limiter import Limiter
+import logging
 from ipwhois import IPWhois, WhoisLookupError
 import stopit
 
@@ -221,20 +224,32 @@ def render_result(ip, do_lookup):
 
 
 app = flask.Flask(__name__, )
-flask_cors.CORS(app)
+cors = flask_cors.CORS(app, resources={r'/w/.*/.*/json': {'origins': '*'}})
+# Load configuration from YAML file(s).
+__dir__ = os.path.dirname(__file__)
+app.config.update(
+    yaml.safe_load(open(os.path.join(__dir__, 'default_config.yaml'))))
+try:
+    app.config.update(
+        yaml.safe_load(open(os.path.join(__dir__, 'config.yaml'))))
+except IOError:
+    # It is ok if there is no local config file
+    pass
 limiter = Limiter(
     app,
     key_func=lambda: flask.request.user_agent.string,
-    default_limits=["10000 per day", "60 per minute"]
 )
-app.config['timeout'] = 20
 
+if 'log_level' in app.config and app.config['log_level'] in dir(logging):
+    app.logger.setLevel(logging.__dict__[app.config['log_level']])
+app.logger.debug('config: {}'.format(app.config))
 
 @app.route('/w/', defaults={'ip': '', 'action': '', 'action2': ''})
 @app.route('/w/<ip>', defaults={'action': '', 'action2': ''})
 @app.route('/w/<ip>/<action>', defaults={'action2': ''})
 @app.route('/w/<ip>/<action>/<action2>', )
 def main_route(ip, action, action2):
+    """application's main routine"""
     app.logger.info('main_route: {}'.format([ip, action, action2]))
     app.logger.info('user_agent="{}"'.format(flask.request.user_agent))
     app.logger.info('referrer="{}"'.format(flask.request.referrer))
@@ -246,8 +261,9 @@ def main_route(ip, action, action2):
             res = lookup2(ip, timeout=app.config['timeout'])
             if res.error is None:
                 return flask.jsonify(res.values)
-            elif isinstance(res.error, stopit.TimeoutException):
+            if isinstance(res.error, stopit.TimeoutException):
                 return flask.jsonify({'error': 'timeout'}), 408
+            return flask.jsonify({'error': '?'}), 502
         else:
             return render_result(ip, True)
     elif action == 'redirect':
@@ -273,6 +289,7 @@ def catch_all_route(path):
 
 @app.route('/gateway.py')
 def legacy_route():
+    """redirects for backward compatibility"""
     app.logger.info('legacy_route')
     ip = sanitize_ip(flask.request.args.get('ip', ''))
     do_lookup = flask.request.args.get('lookup', 'false').lower() != 'false'
@@ -295,6 +312,7 @@ def legacy_route():
 @app.route('/robots.txt')
 @app.route('/toolinfo.json')
 def static_from_root():
+    "route to serve static files"
     return flask.send_from_directory(app.static_folder, flask.request.path[1:])
 
 

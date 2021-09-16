@@ -5,4 +5,4 @@ flask
 flask_cors
 flask_limiter
 stopit
-
+PyYAML

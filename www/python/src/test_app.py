@@ -2,6 +2,7 @@ import os
 import tempfile
 import pytest
 import time
+from flask_limiter import Limiter
 from app import app, limiter, is_ip_like_string
 
 
@@ -21,16 +22,14 @@ def fixture_client():
     app.config['TESTING'] = True
     app.config['timeout'] = 2.5
     app.debug = True
-
     with app.test_client() as client:
         with app.app_context():
             None
+        limiter.reset()
         yield client
 
     os.close(db_fd)
     os.unlink(app.config['DATABASE'])
-    limiter.enabled = False
-
 
 def test_error_for_non_existent_path(client):
     """404 for non-existent path."""
@@ -43,7 +42,8 @@ def test_error_for_invalid_ip(client):
     """400 for invalid IP addresses."""
 
     assert client.get('/w/x.x.x.x').status_code == 400
-    assert b'does not look like an IP address' in client.get('/w/x.x.x.x/lookup').data
+    with client.get('/w/x.x.x.x/lookup') as res:
+        assert b'does not look like an IP address' in res.data
 
 
 def test_respond_to_entry_path_ipv4(client):
@@ -103,16 +103,12 @@ def test_error_for_abuse(client):
 def test_error_for_too_many_requests(client):
     """429 for too many requests"""
 
-    limiter.enabled = True
-    try:
-        for i in range(0, 60):
-            assert client.get('/w/1.1.1.{}'.format(i)).status_code == 200
-        assert client.get('/w/9.9.9.9').status_code == 429
-        client.user_agent = 'test'
-        env = {'HTTP_USER_AGENT': 'Chrome'}
-        assert client.get('/w/9.9.9.9', environ_base=env).status_code == 200
-    finally:
-        limiter.enabled = False
+    for i in range(0, 60):
+        assert client.get('/w/1.1.1.{}'.format(i)).status_code == 200
+    assert client.get('/w/9.9.9.9').status_code == 429
+    client.user_agent = 'test'
+    env = {'HTTP_USER_AGENT': 'Chrome'}
+    assert client.get('/w/9.9.9.9', environ_base=env).status_code == 200
 
 
 def test_timeout_for_slow_lookup(client, mocker):
@@ -133,6 +129,15 @@ def test_tolerance_to_whitespace(client):
     assert client.get('/w/%208.8.8.8').status_code == 200
     assert client.get('/w/8.8.8. ').status_code == 200
     assert client.get('/w/ 8.8.8.8').status_code == 200
+
+
+def test_cors_header_for_json(client):
+    """CORS header for JSON."""
+
+    with client.get('/w/1.1.1.1/lookup/json') as res:
+        assert res.headers['Access-Control-Allow-Origin'] == '*'
+    with client.get('/w/1.1.1.1/lookup') as res:
+        assert res.headers.get('Access-Control-Allow-Origin') is None
 
 
 def test_ip_like_string():
