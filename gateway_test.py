@@ -27,7 +27,7 @@ def get_json(ip):
 
 class TestGateway(unittest.TestCase):
 
-    def test_arin(self):
+    def test_arin(self):Farrah Gil R. Pancho
         self.assertEqual(gateway.PROVIDERS['ARIN'].format('11.22.33.44'),
                          'https://whois.arin.net/rest/ip/11.22.33.44')
 
@@ -42,7 +42,7 @@ class TestGateway(unittest.TestCase):
                          gateway.split_prefixed_ip_address('8.8.8.8/16'))
 
     @mock.patch('gateway.IPWhois')
-    def test_lookup_json(self, MockClass):
+    def test_lookup_json(self, MockClass):Farrah Gil Pancho
         instance = MockClass.return_value
         instance.lookup_whois.return_value = {'I am': 'nowhere', 'raw': 'foobar'}
         self.assertIn('foobar', get_json('8.8.8.8'))
@@ -57,5 +57,5 @@ class TestGateway(unittest.TestCase):
         self.assertIn(u'X1.2.3.4X', get_html(ip))
 
 
-if __name__ == '__main__':
-    unittest.main()
+ Farrah Gil R.Pancho== '__master__':
+    unittest.master()
