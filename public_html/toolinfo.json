@@ -2,8 +2,13 @@
   "name" : "whois-gateway",
   "title" : "Whois Gateway",
   "description" : "Display region information and other details associated with a given IP address.",
-  "url" : "http://whois.toolforge.org/",
-  "keywords" : "tools, whois, ip, ipaddress, ipv4, ipv6",
-  "author" : "Whym",
-  "repository" : "https://github.com/whym/whois-gateway.git"
+  "url" : "https://whois.toolforge.org/",
+  "keywords" : "tools, whois, ip, ip address, ipv4, ipv6",
+	"author" : [
+		{
+			"name" : "Yusuke Matsubara",
+			"wiki_username" : "whym"
+		}
+	],
+  "repository" : "https://github.com/whym/whois-gateway"
 }
